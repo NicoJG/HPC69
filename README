@@ -1,4 +1,4 @@
-## Git configuration (for GitHub)
+# Git configuration (for GitHub)
 
 - Git has to be installed: `sudo apt install git`
 - recommended configuration (as commands):
