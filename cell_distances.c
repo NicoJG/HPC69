@@ -34,10 +34,11 @@ int main(int argc, char *argv[]){
 	printf("Number of buffers: %d\n", nbr_buffer);
 	fseek(fp, 0, SEEK_SET);
 
-
+	// Do we need to allocate buffer_size? The buffer contains other chars as well.
+	// Maybe it could be something like "buffer_size - ?"?
 	Coordinate *coords = (Coordinate*) malloc(buffer_size);
 	if (!coords){
-		perror("Failed to allocte memory for coodinates.");
+		perror("Failed to allocte memory for coordinates.");
 		fclose(fp);
 		return 1;
 	}
