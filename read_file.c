@@ -1,12 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define BUFFER_SZ 512
-#define COORD_NBR 5 // Could change to BUFFER_SZ / ( 3 * 8 )
 #define FLOAT_LENGTH 8
+#define BUFFER_SZ 512
+#define COORD_NBR 10 // Could change to BUFFER_SZ / ( 3 * 8 )
 
+typedef struct {
+	int x;
+	int y;
+	int z;
+} Coordinate;
 
-int merge_char(char *buffer, size_t ix, int which_coord);
+Coordinate parse_coordinate(const char *buffer, int which_coord);
+int parse_value(const char *buffer);
 
 int 
 main (
@@ -23,58 +29,62 @@ main (
         return 1;
     }
 
-    char buffer[BUFFER_SZ];
+    fseek(fp, 0, SEEK_END);
+    int file_size = ftell(fp);
+    int nbr_buffer = file_size/BUFFER_SZ;
+    printf("Number of buffers: %d\n", nbr_buffer);
     fseek(fp, 0, SEEK_SET);
+
+    char buffer[BUFFER_SZ];
     fread(buffer, sizeof(buffer), 1, fp);
 
-
-    int *x = (int *) malloc(sizeof(int) * COORD_NBR);
-    int *y = (int *) malloc(sizeof(int) * COORD_NBR);
-    int *z = (int *) malloc(sizeof(int) * COORD_NBR);
-
-    for (size_t ix = 0, jx = 0; ix <= 3* COORD_NBR * FLOAT_LENGTH; ix += 3 * FLOAT_LENGTH, jx++) {
-        
-	x[jx] = merge_char(buffer, ix, 0);
-	y[jx] = merge_char(buffer, ix, 1);
-	z[jx] = merge_char(buffer, ix, 2);
+    Coordinate *coords = (Coordinate*) malloc(COORD_NBR * sizeof(Coordinate));
+    if (!coords){
+	perror("Failed to allocte memory for coodinates.");
+	fclose(fp);
+	return 1;
     }
+
+    size_t num_coords = 0;
+
+    for (size_t ix = 0; ix < COORD_NBR * 3 * FLOAT_LENGTH; ix += 3 * FLOAT_LENGTH){
+	    coords[num_coords++] = parse_coordinate(buffer, ix);
+    }
+
+    //COMPUTE DISTANCES
     
-    for (size_t ix = 0; ix < COORD_NBR; ix++) {
-        printf("%d, %d, %d\n", x[ix], y[ix], z[ix]);
+    for (size_t ix = 0; ix < num_coords; ix++) {
+	printf("%d, %d, %d\n", coords[ix].x, coords[ix].y, coords[ix].z);
     }
-    fseek(fp, 0, SEEK_END);
-    printf("The file has size %li\n", ftell(fp));
-  
+   
+    printf("The file has size %d\n", file_size);
+ 
+    free(coords);
     fclose(fp);
     
-    free(x);
-    free(y);
-    free(z);
-
     return 0;
 
 }
 
-int merge_char(char *buffer, size_t ix, int which_coord){
+Coordinate parse_coordinate(const char *buffer, int which_coord) {
+    Coordinate coord;
 
-    	int base, bbase, dec, ddec, dddec, sign = 1, num;
-        
-	if (buffer[ix + which_coord * FLOAT_LENGTH] == '-') {
-            sign = -1;
-        }
+    coord.x = parse_value(buffer + which_coord);
+    coord.y = parse_value(buffer + which_coord + FLOAT_LENGTH);
+    coord.z = parse_value(buffer + which_coord + 2 * FLOAT_LENGTH);
 
-        base = *(buffer + ix + which_coord * FLOAT_LENGTH + 1) - '0';
-        bbase = *(buffer + ix + which_coord * FLOAT_LENGTH + 2 ) - '0';
-        dec = *(buffer + ix + which_coord * FLOAT_LENGTH + 4 ) - '0';
-        ddec = *(buffer + ix + which_coord * FLOAT_LENGTH + 5 ) - '0';
-        dddec = *(buffer + ix + which_coord * FLOAT_LENGTH + 6 ) - '0';
-
-        num = sign * (
-            base * 10000 + 
-            bbase * 1000 +
-            dec * 100 + 
-            ddec * 10 +
-            dddec);
-
-	return num;
+    return coord;
 }
+
+int parse_value(const char *buffer) {
+    int sign = (buffer[0] == '-') ? -1 : 1;
+
+    return sign * (
+        (buffer[1] - '0') * 10000 + 
+        (buffer[2] - '0') * 1000 +
+        (buffer[4] - '0') * 100 + 
+        (buffer[5] - '0') * 10 +
+        (buffer[6] - '0')
+    );
+}
+
