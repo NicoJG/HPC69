@@ -8,7 +8,7 @@ void
 compute_distances(
     Coordinate *coords,
     int num_cords,
-    int *distances
+    short *distances
 ) {
     size_t count = 0;
     for (size_t ix = 0; ix < num_cords - 1; ++ix) {
@@ -18,7 +18,7 @@ compute_distances(
     }
 };
 
-int 
+short 
 euc_distance(
     Coordinate p1, 
     Coordinate p2
@@ -39,6 +39,6 @@ euc_distance(
         
         d = (100 * roundf(d)) / 100;
 
-        return (int) d * 10000;
+        return (short) d * 10000;
 
     };
