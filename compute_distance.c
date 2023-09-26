@@ -4,6 +4,7 @@
 
 #include "cell_distances.h"
 
+// Right now we still use compute_distances() in test.c, but we don't need it in the main file. Should remove later.
 void 
 compute_distances(
     Coordinate *coords,
