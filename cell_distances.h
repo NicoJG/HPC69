@@ -34,10 +34,10 @@ void
 compute_distances(
     Coordinate *coords,
     int num_cords,
-    int *distances
+    short *distances
     );
 
-int 
+short 
 euc_distance(
     Coordinate p1, 
     Coordinate p2
