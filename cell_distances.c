@@ -5,7 +5,7 @@
 int main(int argc, char *argv[]){
 
 	FILE *fp;
-	char *file_name = "data/cells_1e2";
+	char *file_name = "data/cells_3e7";
 
 	fp = fopen(file_name, "rb");
 	if (fp == NULL) {
@@ -23,14 +23,14 @@ int main(int argc, char *argv[]){
 	printf("Number of buffers: %d\n", nbr_buffer);
 	fseek(fp, 0, SEEK_SET);
 
-	Coordinate *coords = (Coordinate*) malloc(sizeof(Coordinate) * NBR_LINES);
+	Coordinate *coords = (Coordinate*) malloc(sizeof(Coordinate) * NBR_LINES); // So far we've been working with short variable type for the coordinates. But since we have to convert it to float to compute the distances, maybe we should save it as float anyway. Uses more memory but I guess it should be faster I believe. /R
 	if (!coords){
 		perror("Failed to allocte memory for coordinates.");
 		fclose(fp);
 		return 1;
 	}
 
-	int dist;
+	short dist;
 	short distances[3464]; //Array to store all the possible distances (from 0 to 3464).
 	memset(distances, 0, sizeof(distances)); // Set all the distances count to 0.
 
@@ -41,8 +41,8 @@ int main(int argc, char *argv[]){
 		for (size_t ix = 0; ix < NBR_LINES - 1; ++ix) {
 			for (size_t jx = ix + 1; jx < NBR_LINES; ++jx) {
 			    dist = euc_distance(coords[ix], coords[jx]);
-			  //  printf("dist = %d\n", dist);
-			    //distances[dist]++;
+			    //printf("dist = %d\n", dist);
+			    distances[dist]++;
 			}
 		}
 	}
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]){
 	}
 
 	for (size_t ix = 0; ix < 3464; ix++) {
-		if (distances[ix] != 0)
+		if (distances[ix] > 2)
 			printf("%d %d\n", ix, distances[ix]);
 	}
 	

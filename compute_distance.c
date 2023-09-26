@@ -38,7 +38,7 @@ euc_distance(
             (z2 - z1) * (z2 - z1)
             );
         
-        d = roundf(100 * d) / 100;
+        d = roundf(d/10);
         return (short) d;
 
     };
