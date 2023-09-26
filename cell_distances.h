@@ -2,13 +2,13 @@
 #include <stdio.h>
 
 #define FLOAT_LENGTH 8
-#define BUFFER_SZ 512
 #define COORD_NBR 1
+#define NBR_LINES 1
 
 typedef struct {
-	int x;
-	int y;
-	int z;
+	short x;
+	short y;
+	short z;
 } Coordinate;
 
 Coordinate 
