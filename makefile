@@ -10,7 +10,7 @@ OBJS = $(patsubst %.c,%.o,$(SRCS))
 .PHONY : all clean run
 
 all : \
-	exc_cell_dist
+	exc_cell_dist.exe
 
 exc_cell_dist.exe : $(OBJS) cell_distances.h
 	$(CC) $(CFLAGS) -o $@ $^
