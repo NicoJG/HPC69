@@ -1,17 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define FLOAT_LENGTH 8
-#define COORD_NBR 1 // Could change to buffer_size / ( 3 * 8 )
-
-
-typedef struct {
-	int x;
-	int y;
-	int z;
-} Coordinate;
-
-void read_coordinates(FILE *fp, Coordinate *coords, size_t buffer_size);
+#include "cell_distances.h"
 
 int main(int argc, char *argv[]){
 
