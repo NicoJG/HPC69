@@ -19,7 +19,7 @@ main(
     short dist[3] = {0, 0, 0};
 
     compute_distances(points, n, dist);
-    printf("dist[0]: %d\n", dist[0]);
+    printf("dist[0]: %d\n", dist[2]);
 
     return 0;
 
