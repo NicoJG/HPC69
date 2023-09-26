@@ -29,3 +29,15 @@ read_coordinates(
     size_t buffer_size
     );
 
+void 
+compute_distances(
+    Coordinate *coords,
+    int num_cords,
+    int *distances
+    );
+
+int 
+euc_distance(
+    Coordinate p1, 
+    Coordinate p2
+    );
