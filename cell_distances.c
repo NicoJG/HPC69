@@ -30,17 +30,37 @@ int main(int argc, char *argv[]){
 		return 1;
 	}
 
+	int dist;
+	short distances[3464]; //Array to store all the possible distances (from 0 to 3464).
+	memset(distances, 0, sizeof(distances)); // Set all the distances count to 0.
+
 	// Read the coordinates
 	for (size_t count_buffer = 0; count_buffer < nbr_buffer; count_buffer++){
-		read_coordinates(fp, coords, buffer_size);	
-		for (size_t ix = 0; ix < COORD_NBR; ix++) {
-			printf("%d, %d, %d\n", coords[ix].x, coords[ix].y, coords[ix].z);
+		read_coordinates(fp, coords, buffer_size);
+		
+		for (size_t ix = 0; ix < NBR_LINES - 1; ++ix) {
+			for (size_t jx = ix + 1; jx < NBR_LINES; ++jx) {
+			    dist = euc_distance(coords[ix], coords[jx]);
+			    printf("dist = %d\n", dist);
+			    //distances[dist]++;
+			}
 		}
 	}
 
 	int remaining_bytes = file_size % buffer_size;
 	read_coordinates(fp, coords, remaining_bytes); // Maybe we should reallocate for the exact size of remaining bytes.
+	for (size_t ix = 0; ix < NBR_LINES - 1; ++ix) {
+		for (size_t jx = ix + 1; jx < NBR_LINES; ++jx) {
+		    dist = euc_distance(coords[ix], coords[jx]);
+		    //distances[dist]++;
+		}
+	}
 
+	for (size_t ix = 0; ix < 3464; ix++) {
+		if (distances[ix] != 0)
+			printf("%d %d\n", ix, distances[ix]);
+	}
+	
 	free(coords);
 	return 0;
 }
