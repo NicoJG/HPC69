@@ -1,8 +1,8 @@
 CC = gcc
-CFLAGS = -march=native -g
+CFLAGS = -march=native -g -lm
 
 # List of source files
-SRCS = cell_distances.c read_file.c
+SRCS = cell_distances.c read_file.c compute_distance.c test.c
 
 # Create a list of object files by replacing .c with .o
 OBJS = $(patsubst %.c,%.o,$(SRCS))
@@ -13,6 +13,11 @@ all : \
 	exc_cell_dist
 
 exc_cell_dist : $(OBJS) cell_distances.h
+	$(CC) $(CFLAGS) -o $@ $^
+
+test : \
+	test.o \
+	compute_distance.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 %.o : %.c
