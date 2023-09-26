@@ -2,13 +2,14 @@
 #include <stdlib.h>
 
 #define FLOAT_LENGTH 8
-#define COORD_NBR 1 // Could change to buffer_size / ( 3 * 8 )
+#define COORD_NBR 0 // Could change to buffer_size / ( 3 * 8 )
+#define NBR_LINES 1
 
 
 typedef struct {
-	int x;
-	int y;
-	int z;
+	short x;
+	short y;
+	short z;
 } Coordinate;
 
 void read_coordinates(FILE *fp, Coordinate *coords, size_t buffer_size);
@@ -24,7 +25,7 @@ int main(int argc, char *argv[]){
 	return 1;
 	}
 
-	int buffer_size = 3 * FLOAT_LENGTH * 25 ; // Can edit this
+	int buffer_size = 24 * NBR_LINES;
 
 	fseek(fp, 0, SEEK_END);
 	int file_size = ftell(fp);
@@ -34,8 +35,7 @@ int main(int argc, char *argv[]){
 	printf("Number of buffers: %d\n", nbr_buffer);
 	fseek(fp, 0, SEEK_SET);
 
-
-	Coordinate *coords = (Coordinate*) malloc(buffer_size);
+	Coordinate *coords = (Coordinate*) malloc(sizeof(Coordinate) * NBR_LINES);
 	if (!coords){
 		perror("Failed to allocte memory for coodinates.");
 		fclose(fp);
