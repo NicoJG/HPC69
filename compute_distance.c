@@ -24,8 +24,9 @@ euc_distance(
     Coordinate p2
     ) {
         float x1, x2, y1, y2, z1, z2, d;
+        short short_d;
+
         x1 = (float) p1.x / 10000;
-        printf("%f\n", x1);
         x2 = (float) p2.x / 10000;
         y1 = (float) p1.y / 10000;
         y2 = (float) p2.y / 10000;
@@ -37,9 +38,10 @@ euc_distance(
             (y2 - y1) * (y2 - y1) + 
             (z2 - z1) * (z2 - z1)
             );
-        
-        d = (100 * roundf(d)) / 100;
 
-        return (short) d * 10000;
+        d = roundf(100 * d) / 100;
+        short_d = (short) (d * 32768);
+        
+        return short_d * 10000;
 
     };
