@@ -6,7 +6,7 @@
 #define NBR_LINES 1
 
 typedef struct {
-	short x;
+	short x; // -32,767 to +32,767
 	short y;
 	short z;
 } Coordinate;
