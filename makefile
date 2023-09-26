@@ -12,10 +12,10 @@ OBJS = $(patsubst %.c,%.o,$(SRCS))
 all : \
 	exc_cell_dist
 
-exc_cell_dist : $(OBJS) cell_distances.h
+exc_cell_dist.exe : $(OBJS) cell_distances.h
 	$(CC) $(CFLAGS) -o $@ $^
 
-test : \
+test.exe : \
 	test.o \
 	compute_distance.o
 	$(CC) $(CFLAGS) -o $@ $^
@@ -24,5 +24,5 @@ test : \
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean : 
-	rm -f exc_cell_dist
+	rm -f exc_cell_dist.exe
 	rm -f $(OBJS)
