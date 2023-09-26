@@ -41,7 +41,7 @@ int main(int argc, char *argv[]){
 		for (size_t ix = 0; ix < NBR_LINES - 1; ++ix) {
 			for (size_t jx = ix + 1; jx < NBR_LINES; ++jx) {
 			    dist = euc_distance(coords[ix], coords[jx]);
-			    printf("dist = %d\n", dist);
+			  //  printf("dist = %d\n", dist);
 			    //distances[dist]++;
 			}
 		}
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
 	for (size_t ix = 0; ix < NBR_LINES - 1; ++ix) {
 		for (size_t jx = ix + 1; jx < NBR_LINES; ++jx) {
 		    dist = euc_distance(coords[ix], coords[jx]);
-		    //distances[dist]++;
+		    distances[dist]++;
 		}
 	}
 
