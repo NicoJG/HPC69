@@ -28,5 +28,5 @@ test.o : \
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean : 
-	rm -f exc_cell_dist.exe
+	rm -f exc_cell_dist.exe test.exe
 	rm -f $(OBJS)
