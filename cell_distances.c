@@ -47,13 +47,13 @@ int main(int argc, char *argv[]){
 	// Read the coordinates
 
 	// Move the "fixed" buffer -> If needed could try reversed sweep but complicated
-	for (size_t i_fixed = 0; i_fixed < nbr_buffer; i_fixed++){
+	for (int i_fixed = 0; i_fixed < nbr_buffer; i_fixed++){
 		fseek(fp, i_fixed * buffer_size, SEEK_SET);
 		read_coordinates(fp, coords_fixed, buffer_fixed, buffer_size);
 
 		// Distances within fixed buffer
-		for (size_t ix = 0; ix < NBR_LINES - 1; ++ix) {
-			for (size_t jx = ix + 1; jx < NBR_LINES; ++jx) {
+		for (int ix = 0; ix < NBR_LINES - 1; ++ix) {
+			for (int jx = ix + 1; jx < NBR_LINES; ++jx) {
 			    dist = euc_distance(coords_fixed[ix], coords_fixed[jx]);
 			    count_distances[dist]++;
 			}
@@ -61,13 +61,13 @@ int main(int argc, char *argv[]){
 
 		// Scan over the rest of the file
 		// if i_fixed is the last one this for loop is automatically skipped
-		for (size_t i_scan = i_fixed + 1; i_scan < nbr_buffer; i_scan++) {
+		for (int i_scan = i_fixed + 1; i_scan < nbr_buffer; i_scan++) {
 			fseek(fp, i_scan * buffer_size, SEEK_SET);
 			read_coordinates(fp, coords_scan, buffer_scan, buffer_size);
 
 			// Distances from fixed to scan buffer
-			for (size_t ix = 0; ix < NBR_LINES; ++ix) {
-				for (size_t jx = 0; jx < NBR_LINES; ++jx) {
+			for (int ix = 0; ix < NBR_LINES; ++ix) {
+				for (int jx = 0; jx < NBR_LINES; ++jx) {
 					dist = euc_distance(coords_fixed[ix], coords_scan[jx]);
 					count_distances[dist]++;
 				}
@@ -78,8 +78,8 @@ int main(int argc, char *argv[]){
 		// Scan over the last buffer of the file
 		fseek(fp, nbr_buffer * buffer_size, SEEK_SET);
 		read_coordinates(fp, coords_scan, buffer_scan, remaining_bytes);
-		for (size_t ix = 0; ix < NBR_LINES; ++ix) {
-			for (size_t jx = 0; jx < remaining_lines; ++jx) {
+		for (int ix = 0; ix < NBR_LINES; ++ix) {
+			for (int jx = 0; jx < remaining_lines; ++jx) {
 				dist = euc_distance(coords_fixed[ix], coords_scan[jx]);
 				count_distances[dist]++;
 			}
@@ -89,8 +89,8 @@ int main(int argc, char *argv[]){
 	}
 
 	// Distances within remaining buffer
-	for (short ix = 0; ix < remaining_lines - 1; ++ix) {
-		for (short jx = ix + 1; jx < remaining_lines; ++jx) {
+	for (int ix = 0; ix < remaining_lines - 1; ++ix) {
+		for (int jx = ix + 1; jx < remaining_lines; ++jx) {
 			dist = euc_distance(coords_scan[ix], coords_scan[jx]);
 			count_distances[dist]++;
 		}
@@ -99,9 +99,9 @@ int main(int argc, char *argv[]){
 	long int total_count_distances = 0;
 	long int total_lines = file_size/24;
 
-	for (size_t ix = 0; ix < MAX_DISTANCE + 1; ix++) {
+	for (int ix = 0; ix < MAX_DISTANCE + 1; ix++) {
 		total_count_distances += count_distances[ix];
-		printf("%d %d\n", ix, count_distances[ix]);
+		printf("%05.2f %d\n", ((float)ix)/100, count_distances[ix]);
 	}
 	
 	printf("Counted distances: %d\n", total_count_distances);

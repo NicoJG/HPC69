@@ -5,12 +5,12 @@
 
 void 
 read_coordinates (
-    FILE *fp, Coordinate *coords, char *buffer, size_t buffer_size)
+    FILE *fp, Coordinate *coords, char *buffer, int buffer_size)
 {
     fread(buffer, buffer_size, 1, fp);
 
-    size_t coord_x = 0;
-    for (size_t ix = 0; ix < buffer_size; ix += BYTES_PER_LINE){
+    int coord_x = 0;
+    for (int ix = 0; ix < buffer_size; ix += BYTES_PER_LINE){
 	    coords[coord_x++] = parse_coordinate(buffer, ix);
     }
 }

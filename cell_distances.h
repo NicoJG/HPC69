@@ -30,7 +30,7 @@ read_coordinates(
     FILE *fp, 
     Coordinate *coords,
     char *buffer,
-    size_t buffer_size
+    int buffer_size
     );
 
 void 
