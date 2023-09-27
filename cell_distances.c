@@ -5,7 +5,7 @@
 int main(int argc, char *argv[]){
 
 	FILE *fp;
-	char *file_name = "data/cells_3e7";
+	char *file_name = "data/cells_1e4";
 
 	fp = fopen(file_name, "rb");
 	if (fp == NULL) {
@@ -24,6 +24,7 @@ int main(int argc, char *argv[]){
 	fseek(fp, 0, SEEK_SET);
 
 	Coordinate *coords = (Coordinate*) malloc(sizeof(Coordinate) * NBR_LINES); // So far we've been working with short variable type for the coordinates. But since we have to convert it to float to compute the distances, maybe we should save it as float anyway. Uses more memory but I guess it should be faster I believe. /R
+										   // But actually they say in the description we shouldn't use float so idk. /R
 	if (!coords){
 		perror("Failed to allocte memory for coordinates.");
 		fclose(fp);
@@ -55,11 +56,18 @@ int main(int argc, char *argv[]){
 		    distances[dist]++;
 		}
 	}
+	int count_distances = 0;
+	int total_lines = file_size/24;
 
 	for (size_t ix = 0; ix < 3464; ix++) {
 		if (distances[ix] > 2)
 			printf("%d %d\n", ix, distances[ix]);
+			count_distances += distances[ix];
 	}
+	
+	printf("Counted distances: %d\n", count_distances);
+	printf("Total distances: %d\n", total_lines * (total_lines + 1) / 2); // Sum of n integers
+
 	
 	free(coords);
 	return 0;
