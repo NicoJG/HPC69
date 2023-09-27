@@ -9,17 +9,17 @@ int main(int argc, char *argv[]){
 
 	fp = fopen(file_name, "rb");
 	if (fp == NULL) {
-	perror("File could not be opened.");
-	return 1;
+		perror("File could not be opened.");
+		return 1;
 	}
 
-	int buffer_size = 24 * NBR_LINES;
+	int buffer_size = BYTES_PER_LINE * NBR_LINES;
 
 	fseek(fp, 0, SEEK_END);
 	int file_size = ftell(fp);
-	int nbr_buffer = file_size/buffer_size;
-	printf("File size: %d\n", file_size);
-	printf("Buffer size: %d\n", buffer_size);
+	int nbr_buffer = file_size/buffer_size; 
+	printf("File size: %d bytes\n", file_size);
+	printf("Buffer size: %d bytes\n", buffer_size);
 	printf("Number of buffers: %d\n", nbr_buffer);
 	fseek(fp, 0, SEEK_SET);
 
@@ -31,8 +31,10 @@ int main(int argc, char *argv[]){
 	}
 
 	short dist;
-	short distances[3464]; //Array to store all the possible distances (from 0 to 3464).
+	short distances[MAX_DISTANCE]; //Array to store all the possible distances (from 0 to 3464).
 	memset(distances, 0, sizeof(distances)); // Set all the distances count to 0.
+
+	// TODO: We need to compute all distances, not only in one buffer
 
 	// Read the coordinates
 	for (size_t count_buffer = 0; count_buffer < nbr_buffer; count_buffer++){
@@ -61,6 +63,7 @@ int main(int argc, char *argv[]){
 			printf("%d %d\n", ix, distances[ix]);
 	}
 	
+	fclose(fp);
 	free(coords);
 	return 0;
 }
