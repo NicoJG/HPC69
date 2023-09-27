@@ -24,22 +24,22 @@ euc_distance(
     Coordinate p1, 
     Coordinate p2
     ) {
-        int x1, x2, y1, y2, z1, z2, d;
+        int dx, dy, dz;
 
-        x1 = (int) p1.x;
-        x2 = (int) p2.x;
-        y1 = (int) p1.y;
-        y2 = (int) p2.y;
-        z1 = (int) p1.z;
-        z2 = (int) p2.z;
+        dx = p2.x - p1.x;
+        dy = p2.y - p1.y;
+        dz = p2.z - p1.z;
 
-        d = sqrtf((float)(
-            (x2 - x1) * (x2 - x1) + 
-            (y2 - y1) * (y2 - y1) + 
-            (z2 - z1) * (z2 - z1)
+        float d = sqrtf((float)(
+            dx * dx + 
+            dy * dy + 
+            dz * dz
             ));
-        
+
         d = roundf(d/10); // we reduce precision by 1 digit
+        // round to 2 decimal places:
+        // d = (d+5)/10;
+
         return (short) d;
 
     };
