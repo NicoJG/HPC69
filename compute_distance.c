@@ -36,9 +36,8 @@ euc_distance(
             dz * dz
             ));
 
-        d = roundf(d/10); // we reduce precision by 1 digit
-        // round to 2 decimal places:
-        // d = (d+5)/10;
+        // round to 2 decimal places (faster than roundf)
+        d = (d+5)/10;
 
         return (short) d;
 
