@@ -5,12 +5,9 @@
 
 void 
 read_coordinates (
-    FILE *fp, Coordinate *coords, size_t buffer_size)
+    FILE *fp, Coordinate *coords, char *buffer, size_t buffer_size)
 {
-
-    char buffer[buffer_size];
-    // TODO: we should probably use heap memory here /N
-    fread(buffer, sizeof(buffer), 1, fp);
+    fread(buffer, buffer_size, 1, fp);
 
     int coord_num = buffer_size / BYTES_PER_LINE;
     size_t coord_x = 0;

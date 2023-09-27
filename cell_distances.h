@@ -28,7 +28,8 @@ parse_value(
 void 
 read_coordinates(
     FILE *fp, 
-    Coordinate *coords, 
+    Coordinate *coords,
+    char *buffer,
     size_t buffer_size
     );
 
