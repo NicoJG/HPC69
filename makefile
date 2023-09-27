@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -march=native -g -lm
+CFLAGS = -O2 -march=native -g -lm
 
 # List of source files
 SRCS = cell_distances.c read_file.c compute_distance.c
