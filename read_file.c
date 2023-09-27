@@ -9,6 +9,7 @@ read_coordinates (
 {
 
     char buffer[buffer_size];
+    // TODO: we should probably use heap memory here /N
     fread(buffer, sizeof(buffer), 1, fp);
 
     int coord_num = buffer_size / BYTES_PER_LINE;

@@ -31,7 +31,8 @@ int main(int argc, char *argv[]){
 	}
 
 	short dist;
-	short distances[MAX_DISTANCE]; //Array to store all the possible distances (from 0 to 3464).
+	short distances[MAX_DISTANCE+1]; //Array to store all the possible distances (from 0 to 3464).
+	// TODO: we should probably use heap memory here /N
 	memset(distances, 0, sizeof(distances)); // Set all the distances count to 0.
 
 	// TODO: We need to compute all distances, not only in one buffer
