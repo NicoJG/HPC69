@@ -39,7 +39,7 @@ euc_distance(
             (z2 - z1) * (z2 - z1)
             );
         
-        d = roundf(d/10);
+        d = roundf(d/10); // Why do we divide by 10? /N
         return (short) d;
 
     };

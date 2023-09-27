@@ -9,12 +9,13 @@ read_coordinates (
 {
 
     char buffer[buffer_size];
+    // TODO: we should probably use heap memory here /N
     fread(buffer, sizeof(buffer), 1, fp);
 
-    int coord_num = buffer_size / (3 * FLOAT_LENGTH);
+    int coord_num = buffer_size / BYTES_PER_LINE;
     size_t coord_x = 0;
 
-    for (size_t ix = 0; ix < coord_num * 3 * FLOAT_LENGTH; ix += 3 * FLOAT_LENGTH){
+    for (size_t ix = 0; ix < coord_num * BYTES_PER_LINE; ix += BYTES_PER_LINE){
 	    coords[coord_x++] = parse_coordinate(buffer, ix);
     }
 }
