@@ -9,10 +9,8 @@ read_coordinates (
 {
     fread(buffer, buffer_size, 1, fp);
 
-    int coord_num = buffer_size / BYTES_PER_LINE;
     size_t coord_x = 0;
-
-    for (size_t ix = 0; ix < coord_num * BYTES_PER_LINE; ix += BYTES_PER_LINE){
+    for (size_t ix = 0; ix < buffer_size; ix += BYTES_PER_LINE){
 	    coords[coord_x++] = parse_coordinate(buffer, ix);
     }
 }

@@ -23,7 +23,7 @@ int main(int argc, char *argv[]){
 	printf("Number of buffers: %d\n", nbr_buffer);
 	fseek(fp, 0, SEEK_SET);
 
-	char *buffer = (char*)malloc(buffer_size);
+	char *buffer = (char*)malloc(buffer_size+1);
 	Coordinate *coords = (Coordinate*) malloc(sizeof(Coordinate) * NBR_LINES); 	
 	// So far we've been working with short variable type for the coordinates. But since we have to convert it to float to compute the distances, maybe we should save it as float anyway. Uses more memory but I guess it should be faster I believe. /R
 	// But actually they say in the description we shouldn't use float so idk. /R
@@ -40,8 +40,7 @@ int main(int argc, char *argv[]){
 	// TODO: We need to compute all distances, not only within each buffer
 
 	// Read the coordinates
-	for (size_t count_buffer = 0; count_buffer < 1; count_buffer++){
-	// for (size_t count_buffer = 0; count_buffer < nbr_buffer; count_buffer++){
+	for (size_t count_buffer = 0; count_buffer < nbr_buffer; count_buffer++){
 		read_coordinates(fp, coords, buffer, buffer_size);
 		for (size_t ix = 0; ix < NBR_LINES - 1; ++ix) {
 			for (size_t jx = ix + 1; jx < NBR_LINES; ++jx) {
@@ -70,7 +69,7 @@ int main(int argc, char *argv[]){
 	}
 	
 	printf("Counted distances: %d\n", count_distances);
-	printf("Total distances: %d\n", total_lines * (total_lines + 1) / 2); // Sum of n integers
+	printf("Total distances: %d\n", (total_lines-1) * (total_lines) / 2); // Sum of n-1 integers
 
 	fclose(fp);
 	free(buffer);
