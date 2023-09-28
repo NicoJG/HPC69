@@ -20,9 +20,6 @@ int main(int argc, char *argv[]){
 					n_threads = val;
 					printf("Using %d threads.\n", n_threads);
 					break;
-				case ':':
-					printf("Using default number of threads, %d.\n", n_threads);
-					break;
 				case '?':
 					printf("Unknown option, using default number of threads, %d.\n", n_threads);
 					break;
