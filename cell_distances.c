@@ -125,10 +125,10 @@ int main(int argc, char *argv[]){
 	long int total_count_distances = 0;
 	long int total_lines = file_size/24;
 
-	// for (int ix = 0; ix < MAX_DISTANCE + 1; ix++) {
-	// 	total_count_distances += count_distances[ix];
-	// 	printf("%05.2f %d\n", ((float)ix)/100, count_distances[ix]);
-	// }
+	for (int ix = 0; ix < MAX_DISTANCE + 1; ix++) {
+		total_count_distances += count_distances[ix];
+		printf("%05.2f %d\n", ((float)ix)/100, count_distances[ix]);
+	}
 	
 	printf("Counted distances: %d\n", total_count_distances);
 	printf("Total distances: %d\n", (total_lines-1) * (total_lines) / 2); // Sum of n-1 integers
