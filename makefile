@@ -10,9 +10,14 @@ OBJS = $(patsubst %.c,%.o,$(SRCS))
 .PHONY : all clean run
 
 all : \
-	exc_cell_dist.exe
+	exc_cell_dist.exe \
+	exc_cell_dist_inline.exe
 
 exc_cell_dist.exe : $(OBJS) cell_distances.h
+	$(CC) $(CFLAGS) -o $@ $^
+
+exc_cell_dist_inline.exe : \
+	cell_distances_inline.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 test.exe : \
@@ -28,5 +33,5 @@ test.o : \
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean : 
-	rm -f exc_cell_dist.exe test.exe
+	rm -f exc_cell_dist.exe test.exe exc_cell_dist_inline.exe
 	rm -f $(OBJS)
