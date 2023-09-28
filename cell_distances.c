@@ -1,9 +1,38 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <getopt.h>
+
 #include "cell_distances.h"
 
 int main(int argc, char *argv[]){
 
+	// Set number of threads
+	int n_threads = 4;
+	int opt, val;
+	if (argc > 1) {
+		while((opt = getopt(argc, argv, "t:")) != -1) {
+			switch(opt) {
+				case 't':
+					if ((val = atoi(optarg)) == 0) {
+						printf("'%s' is not a valid integer, using default number of threads, %d.\n", optarg, n_threads);
+						break;
+					}
+					n_threads = val;
+					printf("Using %d threads.\n", n_threads);
+					break;
+				case ':':
+					printf("Using default number of threads, %d.\n", n_threads);
+					break;
+				case '?':
+					printf("Unknown option, using default number of threads, %d.\n", n_threads);
+					break;
+			}
+		}
+	} else {
+		printf("Using default number of threads, %d.\n", n_threads);
+	}
+
+	// Read file
 	FILE *fp;
 	char *file_name = "data/cells_1e4";
 
@@ -99,10 +128,10 @@ int main(int argc, char *argv[]){
 	long int total_count_distances = 0;
 	long int total_lines = file_size/24;
 
-	for (int ix = 0; ix < MAX_DISTANCE + 1; ix++) {
-		total_count_distances += count_distances[ix];
-		printf("%05.2f %d\n", ((float)ix)/100, count_distances[ix]);
-	}
+	// for (int ix = 0; ix < MAX_DISTANCE + 1; ix++) {
+	// 	total_count_distances += count_distances[ix];
+	// 	printf("%05.2f %d\n", ((float)ix)/100, count_distances[ix]);
+	// }
 	
 	printf("Counted distances: %d\n", total_count_distances);
 	printf("Total distances: %d\n", (total_lines-1) * (total_lines) / 2); // Sum of n-1 integers
