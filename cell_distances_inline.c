@@ -25,7 +25,7 @@ parse_coordinate(
     );
 
 static inline
-int 
+short 
 parse_value(
     const char *buffer
     );
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]){
 
 	// Read file
 	FILE *fp;
-	char *file_name = "data/cells_1e4";
+	char *file_name = "data/cells_1e5";
 
 	fp = fopen(file_name, "rb");
 	if (fp == NULL) {
@@ -109,10 +109,6 @@ int main(int argc, char *argv[]){
 
 	int remaining_bytes = file_size % buffer_size;
 	int remaining_lines = remaining_bytes / BYTES_PER_LINE;
-
-	// TODO: We need to compute all distances, not only within each buffer
-
-	// Read the coordinates
 
 	// Move the "fixed" buffer -> If needed could try reversed sweep but complicated
 	for (int i_fixed = 0; i_fixed < nbr_buffer; i_fixed++){
@@ -165,7 +161,7 @@ int main(int argc, char *argv[]){
 	}
 	
 	long int total_count_distances = 0;
-	long int total_lines = file_size/24;
+	long int total_lines = file_size / BYTES_PER_LINE;
 
 	for (int ix = 0; ix < MAX_DISTANCE + 1; ix++) {
 		total_count_distances += count_distances[ix];
@@ -189,21 +185,20 @@ euc_distance(
     Coordinate p1, 
     Coordinate p2
     ) {
-        int dx, dy, dz;
+    	float dx, dy, dz;
 
         dx = p2.x - p1.x;
         dy = p2.y - p1.y;
         dz = p2.z - p1.z;
 
-        float d = sqrtf((float)(
+        float d = sqrtf(
             dx * dx + 
             dy * dy + 
             dz * dz
-            ));
+            );
 
-        // round to 2 decimal places (faster than roundf)
+        // round to 2 decimal places (faster than round)
         d = (d+5)/10;
-
         return (short) d;
 
     };
@@ -234,8 +229,8 @@ parse_coordinate(const char *buffer, int which_coord) {
 }
 
 static inline
-int parse_value(const char *buffer) {
-    int sign = (buffer[0] == '-') ? -1 : 1;
+short parse_value(const char *buffer) {
+    short sign = (buffer[0] == '-') ? -1 : 1;
 
     return sign * (
         (buffer[1] - '0') * 10000 + 
