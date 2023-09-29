@@ -32,8 +32,9 @@ Coordinate parse_coordinate(const char *buffer, int which_coord) {
 static inline
 void 
 read_coordinates (
-    FILE *fp, Coordinate *coords, char *buffer, int buffer_size)
+    FILE *fp, int byte_position, Coordinate *coords, char *buffer, int buffer_size)
 {
+	fseek(fp, byte_position, SEEK_SET);
     fread(buffer, buffer_size, 1, fp);
 
     int coord_x = 0;
