@@ -31,7 +31,7 @@ int main(int argc, char *argv[]){
 
 	// Read file
 	FILE *fp;
-	char *file_name = "data/cells_1e4";
+	char *file_name = "data/cells_1e5";
 
 	fp = fopen(file_name, "rb");
 	if (fp == NULL) {
