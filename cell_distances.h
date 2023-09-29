@@ -20,7 +20,7 @@ parse_coordinate(
     int which_coord
     );
 
-int 
+short 
 parse_value(
     const char *buffer
     );

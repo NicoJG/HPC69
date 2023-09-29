@@ -25,8 +25,8 @@ Coordinate parse_coordinate(const char *buffer, int which_coord) {
     return coord;
 }
 
-int parse_value(const char *buffer) {
-    int sign = (buffer[0] == '-') ? -1 : 1;
+short parse_value(const char *buffer) {
+    short sign = (buffer[0] == '-') ? -1 : 1;
 
     return sign * (
         (buffer[1] - '0') * 10000 + 
