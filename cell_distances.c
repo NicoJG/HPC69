@@ -67,7 +67,7 @@ void determine_file_and_buffer_size(
 	printf("Number of lines per buffer: %d lines\n", *nbr_lines);
 }
 
-void count_distances_within(Coordinate* coords, int nbr_coords, int* count_distances) {
+void count_distances_within(Coordinate* coords, int nbr_coords, unsigned int* count_distances) {
 	// #pragma omp parallel for collapse(2) reduction(+:count_distances[:3465])
 	for (long int ix = 0; ix < nbr_coords - 1; ++ix) {
 		for (long int jx = ix + 1; jx < nbr_coords; ++jx) {
@@ -77,7 +77,7 @@ void count_distances_within(Coordinate* coords, int nbr_coords, int* count_dista
 	}
 }
 
-void count_distances_between(Coordinate* coords1, Coordinate* coords2, int nbr_coords1, int nbr_coords2, int* count_distances) {
+void count_distances_between(Coordinate* coords1, Coordinate* coords2, int nbr_coords1, int nbr_coords2, unsigned int* count_distances) {
 	// #pragma omp parallel for collapse(2) reduction(+:count_distances[:3465])
 	for (long int ix = 0; ix < nbr_coords1; ++ix) {
 		for (long int jx = 0; jx < nbr_coords2; ++jx) {
@@ -117,8 +117,7 @@ int main(int argc, char *argv[]){
 		fclose(fp);
 		return 1;
 	}
-	// Should we change the counts to long int? (INT_MAX = 2e9) /N
-	int count_distances[MAX_DISTANCE+1] = {0}; //Array to store all the possible distances (from 0 to 3464).
+	unsigned int count_distances[MAX_DISTANCE+1] = {0}; //Array to store all the possible distances (from 0 to 3464).
 
 	///////////////////////////////////////////
 	// Main computations
@@ -151,14 +150,14 @@ int main(int argc, char *argv[]){
 	///////////////////////////////////////////
 	
 	// Check if we counted all pairs
-	long int total_count_distances = 0;
-	long int total_lines = file_size/24;
+	unsigned int total_count_distances = 0;
+	unsigned int total_lines = file_size/24;
 	for (int ix = 0; ix < MAX_DISTANCE + 1; ix++) {
 		total_count_distances += count_distances[ix];
-		printf("%05.2f %d\n", ((float)ix)/100, count_distances[ix]);
+		printf("%05.2f %u\n", ((float)ix)/100, count_distances[ix]);
 	}
-	printf("Counted distances: %ld\n", total_count_distances);
-	printf("Total distances: %ld\n", (total_lines-1) * (total_lines) / 2); // Sum of n-1 integers
+	printf("Counted distances: %u\n", total_count_distances);
+	printf("Total distances: %u\n", (total_lines-1) * (total_lines) / 2); // Sum of n-1 integers
 
 	// Free stuff
 	fclose(fp);
