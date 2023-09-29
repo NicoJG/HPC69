@@ -6,6 +6,8 @@
 #define NBR_LINES 1000
 #define MAX_DISTANCE 3464
 
+#define INPUT_FILE "data/cells_1e5"
+
 typedef struct {
 	short x; // -32,767 to +32,767
 	short y;

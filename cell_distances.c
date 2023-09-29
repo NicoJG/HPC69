@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
+#include <omp.h>
 
 #include "read_file.h"
 #include "compute_distance.h"
@@ -32,9 +33,11 @@ int main(int argc, char *argv[]){
 		printf("Using default number of threads, %d.\n", n_threads);
 	}
 
+	omp_set_num_threads(n_threads);
+
 	// Read file
 	FILE *fp;
-	char *file_name = "data/cells_1e4";
+	char *file_name = INPUT_FILE;
 
 	fp = fopen(file_name, "rb");
 	if (fp == NULL) {
@@ -84,7 +87,7 @@ int main(int argc, char *argv[]){
 		for (int ix = 0; ix < NBR_LINES - 1; ++ix) {
 			for (int jx = ix + 1; jx < NBR_LINES; ++jx) {
 			    dist = euc_distance(coords_fixed[ix], coords_fixed[jx]);
-			    count_distances[dist]++;
+			    count_distances[dist] += 1;
 			}
 		}
 

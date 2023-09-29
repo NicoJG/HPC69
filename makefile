@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O2 -march=native -g -lm
+CFLAGS = -O2 -march=native -g -lm -fopenmp
 
 .PHONY : all clean run
 
