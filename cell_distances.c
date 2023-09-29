@@ -54,7 +54,6 @@ int main(int argc, char *argv[]){
 	}
 
 	int buffer_size;
-	//int buffer_size = BYTES_PER_LINE * nbr_lines;
 	if (file_size > MAX_MEM){
 		buffer_size = 2 * MAX_MEM / 3 - ((2 * MAX_MEM / 3) % BYTES_PER_LINE);
 	}
@@ -84,7 +83,7 @@ int main(int argc, char *argv[]){
 
 	short dist;
 	int count_distances[MAX_DISTANCE+1]; //Array to store all the possible distances (from 0 to 3464).
-	memset(count_distances, 0, sizeof(count_distances)); // Set all the distances count to 0.
+	memset(count_distances, 0, sizeof(int)*(MAX_DISTANCE+1)); // Set all the distances count to 0.
 
 	int remaining_bytes = file_size % buffer_size;
 	int remaining_lines = remaining_bytes / BYTES_PER_LINE;
@@ -97,9 +96,11 @@ int main(int argc, char *argv[]){
 		read_coordinates(fp, coords_fixed, buffer, buffer_size);
 
 		// Distances within fixed buffer
-		for (int ix = 0; ix < nbr_lines - 1; ++ix) {
-			for (int jx = ix + 1; jx < nbr_lines; ++jx) {
+		// #pragma omp parallel for collapse(2) reduction(+:count_distances[:3465])
+		for (long int ix = 0; ix < nbr_lines - 1; ++ix) {
+			for (long int jx = ix + 1; jx < nbr_lines; ++jx) {
 			    dist = euc_distance(coords_fixed[ix], coords_fixed[jx]);
+				// #pragma omp atomic
 			    count_distances[dist] += 1;
 			}
 		}
@@ -111,10 +112,12 @@ int main(int argc, char *argv[]){
 			read_coordinates(fp, coords_scan, buffer, buffer_size);
 
 			// Distances from fixed to scan buffer
-			for (int ix = 0; ix < nbr_lines; ++ix) {
-				for (int jx = 0; jx < nbr_lines; ++jx) {
+		// #pragma omp parallel for collapse(2) reduction(+:count_distances[:3465])
+			for (long int ix = 0; ix < nbr_lines; ++ix) {
+				for (long int jx = 0; jx < nbr_lines; ++jx) {
 					dist = euc_distance(coords_fixed[ix], coords_scan[jx]);
-					count_distances[dist]++;
+					// #pragma omp atomic
+					count_distances[dist] += 1;
 				}
 			}
 
@@ -123,10 +126,12 @@ int main(int argc, char *argv[]){
 		// Scan over the last buffer of the file
 		fseek(fp, nbr_buffer * buffer_size, SEEK_SET);
 		read_coordinates(fp, coords_scan, buffer, remaining_bytes);
-		for (int ix = 0; ix < nbr_lines; ++ix) {
-			for (int jx = 0; jx < remaining_lines; ++jx) {
+		// #pragma omp parallel for collapse(2) reduction(+:count_distances[:3465])
+		for (long int ix = 0; ix < nbr_lines; ++ix) {
+			for (long int jx = 0; jx < remaining_lines; ++jx) {
 				dist = euc_distance(coords_fixed[ix], coords_scan[jx]);
-				count_distances[dist]++;
+				// #pragma omp atomic
+				count_distances[dist] += 1;
 			}
 		}
 
@@ -134,10 +139,11 @@ int main(int argc, char *argv[]){
 	}
 
 	// Distances within remaining buffer
-	for (int ix = 0; ix < remaining_lines - 1; ++ix) {
-		for (int jx = ix + 1; jx < remaining_lines; ++jx) {
+	// #pragma omp parallel for collapse(2) reduction(+:count_distances[:3465])
+	for (long int ix = 0; ix < remaining_lines - 1; ++ix) {
+		for (long int jx = ix + 1; jx < remaining_lines; ++jx) {
 			dist = euc_distance(coords_scan[ix], coords_scan[jx]);
-			count_distances[dist]++;
+			count_distances[dist] += 1;
 		}
 	}
 	
@@ -149,8 +155,8 @@ int main(int argc, char *argv[]){
 		printf("%05.2f %d\n", ((float)ix)/100, count_distances[ix]);
 	}
 	
-	printf("Counted distances: %d\n", total_count_distances);
-	printf("Total distances: %d\n", (total_lines-1) * (total_lines) / 2); // Sum of n-1 integers
+	printf("Counted distances: %ld\n", total_count_distances);
+	printf("Total distances: %ld\n", (total_lines-1) * (total_lines) / 2); // Sum of n-1 integers
 
 	fclose(fp);
 	free(buffer);
