@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <string.h>
 
-#include "cell_distances.h"
+#include "read_file.h"
+#include "compute_distance.h"
+#include "constants.h"
 
 int main(int argc, char *argv[]){
 
@@ -31,7 +34,7 @@ int main(int argc, char *argv[]){
 
 	// Read file
 	FILE *fp;
-	char *file_name = "data/cells_1e5";
+	char *file_name = "data/cells_1e4";
 
 	fp = fopen(file_name, "rb");
 	if (fp == NULL) {
