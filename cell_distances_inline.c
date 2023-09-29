@@ -185,20 +185,21 @@ euc_distance(
     Coordinate p1, 
     Coordinate p2
     ) {
-    	float dx, dy, dz;
+    	int dx, dy, dz;
 
         dx = p2.x - p1.x;
         dy = p2.y - p1.y;
         dz = p2.z - p1.z;
 
-        float d = sqrtf(
+        float d = sqrtf((float)(
             dx * dx + 
             dy * dy + 
             dz * dz
-            );
+			));
 
         // round to 2 decimal places (faster than round)
-        d = (d+5)/10;
+        // d = (d+5)/10;
+		d /= 10;
         return (short) d;
 
     };
