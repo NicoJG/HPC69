@@ -1,6 +1,6 @@
 import numpy as np
 
-our_dists, our_counts = np.genfromtxt("output.txt", unpack=True, skip_header=104, skip_footer=2)
+our_dists, our_counts = np.genfromtxt("output.txt", unpack=True, skip_header=6, skip_footer=2)
 target_dists, target_counts = np.genfromtxt("data/dist_1e5_short_trunc", unpack=True)
 
 diffs = our_counts - target_counts[:-1]
