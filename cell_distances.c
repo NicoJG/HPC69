@@ -2,12 +2,13 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
-#include <omp.h>
+//#include <omp.h>
 
 #include "read_file.h"
 #include "compute_distance.h"
 #include "constants.h"
 
+static inline
 int parse_num_threads(int argc, char *argv[]) {
 	int n_threads = 4;
 	int opt, val;
@@ -34,6 +35,7 @@ int parse_num_threads(int argc, char *argv[]) {
 	return n_threads;
 }
 
+static inline
 void determine_file_and_buffer_size(
 				FILE* fp, 
 				unsigned long* file_size, 
@@ -69,8 +71,9 @@ void determine_file_and_buffer_size(
 	printf("Number of lines per buffer: %u lines\n", *nbr_lines);
 }
 
+static inline
 void count_distances_within(Coordinate* coords, unsigned int nbr_coords, unsigned long* count_distances) {
-	#pragma omp parallel for collapse(2) reduction(+:count_distances[:(MAX_DISTANCE+1)])
+	// #pragma omp parallel for collapse(2) reduction(+:count_distances[:(MAX_DISTANCE+1)])
 	for (unsigned long ix = 0; ix < nbr_coords - 1; ++ix) {
 		for (unsigned long jx = ix + 1; jx < nbr_coords; ++jx) {
 			short dist = euc_distance(coords[ix], coords[jx]);
@@ -79,8 +82,9 @@ void count_distances_within(Coordinate* coords, unsigned int nbr_coords, unsigne
 	}
 }
 
+static inline
 void count_distances_between(Coordinate* coords1, Coordinate* coords2, unsigned int nbr_coords1, unsigned int nbr_coords2, unsigned long* count_distances) {
-	#pragma omp parallel for collapse(2) reduction(+:count_distances[:(MAX_DISTANCE+1)])
+	// #pragma omp parallel for collapse(2) reduction(+:count_distances[:(MAX_DISTANCE+1)])
 	for (unsigned long ix = 0; ix < nbr_coords1; ++ix) {
 		for (unsigned long jx = 0; jx < nbr_coords2; ++jx) {
 			short dist = euc_distance(coords1[ix], coords2[jx]);
@@ -94,7 +98,7 @@ int main(int argc, char *argv[]){
 
 	// Set number of threads
 	int n_threads = parse_num_threads(argc, argv);
-	omp_set_num_threads(n_threads);
+	// omp_set_num_threads(n_threads);
 
 	// Open file
 	FILE *fp;
@@ -153,6 +157,7 @@ int main(int argc, char *argv[]){
 
 	///////////////////////////////////////////
 	
+	
 	// Check if we counted all pairs
 	unsigned long total_count_distances = 0;
 	unsigned long total_lines = file_size/24;
@@ -162,7 +167,7 @@ int main(int argc, char *argv[]){
 	}
 	printf("Counted distances: %lu\n", total_count_distances);
 	printf("Total distances: %lu\n", (total_lines-1) * (total_lines) / 2); // Sum of n-1 integers
-
+	
 	// Free stuff
 	fclose(fp);
 	free(buffer);
