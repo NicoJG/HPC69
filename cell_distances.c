@@ -70,9 +70,9 @@ void determine_file_and_buffer_size(
 }
 
 void count_distances_within(Coordinate* coords, unsigned int nbr_coords, unsigned long* count_distances) {
-	// #pragma omp parallel for collapse(2) reduction(+:count_distances[:3465])
-	for (unsigned int ix = 0; ix < nbr_coords - 1; ++ix) {
-		for (unsigned int jx = ix + 1; jx < nbr_coords; ++jx) {
+	#pragma omp parallel for collapse(2) reduction(+:count_distances[:(MAX_DISTANCE+1)])
+	for (unsigned long ix = 0; ix < nbr_coords - 1; ++ix) {
+		for (unsigned long jx = ix + 1; jx < nbr_coords; ++jx) {
 			short dist = euc_distance(coords[ix], coords[jx]);
 			count_distances[dist] += 1;
 		}
@@ -80,9 +80,9 @@ void count_distances_within(Coordinate* coords, unsigned int nbr_coords, unsigne
 }
 
 void count_distances_between(Coordinate* coords1, Coordinate* coords2, unsigned int nbr_coords1, unsigned int nbr_coords2, unsigned long* count_distances) {
-	// #pragma omp parallel for collapse(2) reduction(+:count_distances[:3465])
-	for (unsigned int ix = 0; ix < nbr_coords1; ++ix) {
-		for (unsigned int jx = 0; jx < nbr_coords2; ++jx) {
+	#pragma omp parallel for collapse(2) reduction(+:count_distances[:(MAX_DISTANCE+1)])
+	for (unsigned long ix = 0; ix < nbr_coords1; ++ix) {
+		for (unsigned long jx = 0; jx < nbr_coords2; ++jx) {
 			short dist = euc_distance(coords1[ix], coords2[jx]);
 			count_distances[dist] += 1;
 		}
