@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
-//#include <omp.h>
+#include <omp.h>
 
 #include "read_file.h"
 #include "compute_distance.h"
@@ -73,7 +73,9 @@ void determine_file_and_buffer_size(
 
 static inline
 void count_distances_within(Coordinate* coords, unsigned int nbr_coords, unsigned long* count_distances) {
-	// #pragma omp parallel for collapse(2) reduction(+:count_distances[:(MAX_DISTANCE+1)])
+	if (nbr_coords == 0)
+		return; // needed because unsigned int (0-1)==UINT_MAX
+	#pragma omp parallel for collapse(2) reduction(+:count_distances[:(MAX_DISTANCE+1)])
 	for (unsigned long ix = 0; ix < nbr_coords - 1; ++ix) {
 		for (unsigned long jx = ix + 1; jx < nbr_coords; ++jx) {
 			short dist = euc_distance(coords[ix], coords[jx]);
@@ -84,7 +86,9 @@ void count_distances_within(Coordinate* coords, unsigned int nbr_coords, unsigne
 
 static inline
 void count_distances_between(Coordinate* coords1, Coordinate* coords2, unsigned int nbr_coords1, unsigned int nbr_coords2, unsigned long* count_distances) {
-	// #pragma omp parallel for collapse(2) reduction(+:count_distances[:(MAX_DISTANCE+1)])
+	if (nbr_coords1 == 0 || nbr_coords2 == 0)
+		return; // needed because unsigned int (0-1)==UINT_MAX
+	#pragma omp parallel for collapse(2) reduction(+:count_distances[:(MAX_DISTANCE+1)])
 	for (unsigned long ix = 0; ix < nbr_coords1; ++ix) {
 		for (unsigned long jx = 0; jx < nbr_coords2; ++jx) {
 			short dist = euc_distance(coords1[ix], coords2[jx]);
@@ -98,7 +102,7 @@ int main(int argc, char *argv[]){
 
 	// Set number of threads
 	int n_threads = parse_num_threads(argc, argv);
-	// omp_set_num_threads(n_threads);
+	omp_set_num_threads(n_threads);
 
 	// Open file
 	FILE *fp;

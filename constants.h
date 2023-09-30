@@ -7,7 +7,7 @@
 #define MAX_MEM 4500000 //Ideally 4.5Mb, change that when it works. 
 // MAX_MEM has to be smaller than 4294967296 (UINT_MAX)
 
-#define INPUT_FILE "data/cells_1e4"
+#define INPUT_FILE "data/cells_1e5"
 
 typedef struct {
 	short x; // -32,767 to +32,767
