@@ -10,13 +10,14 @@
 
 #define DEFAULT_THREADS 4
 #define DEFAULT_IMAGE_SIZE 1000
+#define DEFAULT_ORDER 3
 
 int main(int argc, char *argv[]){
 	
 	//Default values
-	int n_threads;
-	int image_size;
-	int order = 3;
+	int n_threads = DEFAULT_THREADS;
+	int image_size = DEFAULT_IMAGE_SIZE;
+	int order = DEFAULT_ORDER;
 	int opt, val;
 
 	if (argc > 1) {
