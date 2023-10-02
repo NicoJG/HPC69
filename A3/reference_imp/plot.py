@@ -1,12 +1,12 @@
 #%% 
 import matplotlib.pyplot as plt
-import matplotlib.image as mpim
 
 # Load the PPM image using matplotlib
-image = mpim.imread("newton_convergence_x5.ppm")
-print(image.shape)
-plt.imshow(image)
+files = ["newton_attractors_x5.ppm", "newton_convergence_x5.ppm"]
+file_names = ["newton_attractors.png", "newton_convergence.png"]
 
-# Show the image in a window
-plt.show()
-# plt.savefig("fig2.png")
+for file, name in zip(files, file_names):
+    image = plt.imread(file)
+    plt.imshow(image)   
+    plt.show()
+    plt.savefig(name)
