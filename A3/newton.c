@@ -82,13 +82,51 @@ check_compute_thread(
 	const thrd_info_check_t *thrd_info = (thrd_info_check_t*) args;
 	float **which_root = thrd_info->which_root;
 	short **n_its = thrd_info->n_its;
-	const int image_size = thrd_info->image_sz;
+	const int image_sz = thrd_info->image_sz;
 	const int n_threads = thrd_info->n_threads;
 	mtx_t *mtx = thrd_info->mtx;
 	cnd_t *cnd = thrd_info->cnd;
 	int_padded *status = thrd_info->status;
 
+	// No incrementation in this loop
+	for (int ix = 0, ibnd; ix < image_sz; ) {
 
+		// Check if new line is available
+		for (mtx_lock(mtx); ; ) {
+			
+			// Extract status variables
+			ibnd = image_sz;
+			for (int tx = 0; tx < n_threads; ++tx) {
+				if (ibnd > status[tx].val) {
+					ibnd = status[tx].val;
+				}
+			}
+
+			if (ibnd <= ix) {
+				cnd_wait(cnd, mtx);
+
+			} else {
+				mtx_unlock(mtx);
+				break;
+			}
+		}
+
+		fprintf(stderr, "checking until %i\n", ibnd);
+
+		for ( ; ix < ibnd; ++ix) {
+			for (int jx = 0; jx < image_sz; ++jx) {
+				printf("%d, ", which_root[ix][jx]);
+			}
+			printf("\n");
+
+			// Now we can free the rows of the arrays
+			free(which_root[ix]);
+			free(n_its[ix]);
+		}	
+
+	}
+
+	return 0;
 }
 
 
@@ -157,8 +195,30 @@ int main(int argc, char *argv[]){
 		// Martin adds "thrd_detach" here but I'm not entirely sure what it does!
 		// Isak
 
-		// thrd_detach(thrds[tx]);
+		thrd_detach(thrds[tx]);
 	}
+
+	// Check status
+	{
+		thrd_info_check.which_root= which_root;
+		thrd_info_check.n_its = n_its;
+		thrd_info_check.image_sz = image_sz;
+		thrd_info_check.n_threads = n_threads;
+		thrd_info_check.mtx = &mtx;
+		thrd_info_check.cnd = &cnd;
+		thrd_info_check.status = status;
+
+		int r = thrd_create(&thrd_check, check_compute_thread, (void*) (&thrd_info_check));
+		if ( r != thrd_success ) {
+			fprintf(stderr, "failed to create thread\n");
+			exit(1);
+		}
+  	}
+
+  {
+    int r;
+    thrd_join(thrd_check, &r);
+  }
 
 	// free variables
 	free(which_root);
