@@ -7,6 +7,7 @@
 #include "computations.h"
 
 
+
 typedef struct {
 	int val;
 	char pad[60]; 
@@ -28,7 +29,7 @@ typedef struct {
 	float **which_root;
 	short **n_its;
 	int image_size;
-	int n_comp_thrds;
+	int n_threads;
 	mtx_t *mtx;
 	cnd_t *cnd;
 	int_padded *status;
@@ -51,6 +52,9 @@ compute_thread(
 	cnd_t *cnd = thrd_info->cnd;
 	int_padded *status = thrd_info->status;
 
+	// Initialise needed variables
+	double complex x;
+
 	// Allocate the rows of which_root and n_its directly here in the computation thread
 	for (int ix = ib; ix < image_size; ix += istep) {
 		float *which_root_entrs = (float *) malloc(sizeof(float) * image_size);
@@ -58,6 +62,8 @@ compute_thread(
 
 		// Do the computations here
 		for (int jx = 0; jx < image_size; ++jx) {
+			x = get_x0(ix, jx); // Don't use this yet but I guess we will eventually!
+
 			which_root_entrs[jx] = jx; // DUMMY
 			no_ints_entrs[jx] = ix; // DUMMY
 		}
@@ -83,7 +89,7 @@ check_compute_thread(
 	float **which_root = thrd_info->which_root;
 	short **n_its = thrd_info->n_its;
 	const int image_size = thrd_info->image_size;
-	const int n_comp_thrds = thrd_info->n_comp_thrds;
+	const int n_threads = thrd_info->n_threads;
 	mtx_t *mtx = thrd_info->mtx;
 	cnd_t *cnd = thrd_info->cnd;
 	int_padded *status = thrd_info->status;
@@ -96,7 +102,7 @@ check_compute_thread(
 			
 			// Extract status variables
 			ibnd = image_size;
-			for (int tx = 0; tx < n_comp_thrds; ++tx) {
+			for (int tx = 0; tx < n_threads; ++tx) {
 				if (ibnd > status[tx].val) {
 					ibnd = status[tx].val;
 				}
@@ -139,9 +145,11 @@ int main(int argc, char *argv[]){
 	// read command line arguments -> nthreads, image_size, order
 	parse_cmd_args(argc, argv);
 
-	// Assume one thread will do the writing and one handles the main program, 
-	// leaving n_threads - 2 for computations
-	int n_comp_thrds = n_threads - 2 > 1 ? n_threads - 2: 1;
+	// The program will fail if n_threads > image_size
+	if (n_threads > image_size) {
+		fprintf(stderr, "you cant assign more threads than rows and cols in the image.\n");
+		return 1;
+	}
 
 	// LAYOUT:
     // setup arrays -> attractors, convergences, roots
@@ -162,8 +170,8 @@ int main(int argc, char *argv[]){
 
 	// Initialise all variables needed for the threads
 
-	thrd_t thrds[n_comp_thrds];
-	thrd_info_t thrds_info[n_comp_thrds];
+	thrd_t thrds[n_threads];
+	thrd_info_t thrds_info[n_threads];
 
 	thrd_t thrd_check;
 	thrd_info_check_t thrd_info_check;
@@ -174,13 +182,13 @@ int main(int argc, char *argv[]){
 	cnd_t cnd;
 	cnd_init(&cnd);
 
-	int_padded status[n_comp_thrds];
+	int_padded status[n_threads];
 
-	for (int tx = 0; tx < n_comp_thrds; ++tx) {
+	for (int tx = 0; tx < n_threads; ++tx) {
 		thrds_info[tx].which_root = which_root;
 		thrds_info[tx].n_its = n_its;
 		thrds_info[tx].ib = tx;
-		thrds_info[tx].istep = n_comp_thrds;
+		thrds_info[tx].istep = n_threads;
 		thrds_info[tx].image_size = image_size;
 		thrds_info[tx].tx = tx;
 		thrds_info[tx].mtx = &mtx;
@@ -205,7 +213,7 @@ int main(int argc, char *argv[]){
 		thrd_info_check.which_root= which_root;
 		thrd_info_check.n_its = n_its;
 		thrd_info_check.image_size = image_size;
-		thrd_info_check.n_comp_thrds = n_comp_thrds;
+		thrd_info_check.n_threads = n_threads;
 		thrd_info_check.mtx = &mtx;
 		thrd_info_check.cnd = &cnd;
 		thrd_info_check.status = status;
