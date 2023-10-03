@@ -20,7 +20,7 @@ double complex get_root_by_index(short i_root) {
     return exp(I*(2 * PI * i_root / order));
 }
 
-double complex newton_iteration(double complex x_prev) {
+double complex newton_iteration(double complex x_prev, int degree) {
 
 	// Analytical expression is 	
 	/*
