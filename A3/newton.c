@@ -28,7 +28,7 @@ typedef struct {
 	float **which_root;
 	short **n_its;
 	int image_size;
-	int n_threads;
+	int n_comp_thrds;
 	mtx_t *mtx;
 	cnd_t *cnd;
 	int_padded *status;
@@ -59,7 +59,7 @@ compute_thread(
 		// Do the computations here
 		for (int jx = 0; jx < image_size; ++jx) {
 			which_root_entrs[jx] = jx; // DUMMY
-			no_ints_entrs[jx] = 2 * jx; // DUMMY
+			no_ints_entrs[jx] = ix; // DUMMY
 		}
 
 		// Lock so we don't read and write to matrices at the same time
@@ -83,7 +83,7 @@ check_compute_thread(
 	float **which_root = thrd_info->which_root;
 	short **n_its = thrd_info->n_its;
 	const int image_size = thrd_info->image_size;
-	const int n_threads = thrd_info->n_threads;
+	const int n_comp_thrds = thrd_info->n_comp_thrds;
 	mtx_t *mtx = thrd_info->mtx;
 	cnd_t *cnd = thrd_info->cnd;
 	int_padded *status = thrd_info->status;
@@ -91,12 +91,12 @@ check_compute_thread(
 	// No incrementation in this loop
 	for (int ix = 0, ibnd; ix < image_size; ) {
 
-		// Check if new line is available
+		// Check if new row is available
 		for (mtx_lock(mtx); ; ) {
 			
 			// Extract status variables
 			ibnd = image_size;
-			for (int tx = 0; tx < n_threads; ++tx) {
+			for (int tx = 0; tx < n_comp_thrds; ++tx) {
 				if (ibnd > status[tx].val) {
 					ibnd = status[tx].val;
 				}
@@ -113,6 +113,7 @@ check_compute_thread(
 
 		fprintf(stderr, "checking until %i\n", ibnd);
 
+		// SHOULD WRITE THE IMAGES HERE
 		for ( ; ix < ibnd; ++ix) {
 			for (int jx = 0; jx < image_size; ++jx) {
 				printf("%d, ", n_its[ix][jx]);
@@ -137,6 +138,12 @@ int main(int argc, char *argv[]){
 
 	// read command line arguments -> nthreads, image_size, order
 	parse_cmd_args(argc, argv);
+
+	// Assume one thread will do the writing and one handles the main program, 
+	// leaving n_threads - 2 for computations
+	int n_comp_thrds = n_threads - 2 > 1 ? n_threads - 2: 1;
+
+	// LAYOUT:
     // setup arrays -> attractors, convergences, roots
 
     // iterate over pixels
@@ -148,14 +155,15 @@ int main(int argc, char *argv[]){
 
     // write ppm files
 
-	// Allocate double pointers to the rows of the two images but save the 
-	// the allocations of entries to a different thread
+	// Allocate double pointers to the rows of the two images but allocate
+	// the entries in the threads as we go
 	float **which_root = (float **) malloc(sizeof(float *) * image_size);
 	short **n_its = (short **) malloc(sizeof(short *) * image_size);
 
 	// Initialise all variables needed for the threads
-	thrd_t thrds[n_threads];
-	thrd_info_t thrds_info[n_threads];
+
+	thrd_t thrds[n_comp_thrds];
+	thrd_info_t thrds_info[n_comp_thrds];
 
 	thrd_t thrd_check;
 	thrd_info_check_t thrd_info_check;
@@ -166,13 +174,13 @@ int main(int argc, char *argv[]){
 	cnd_t cnd;
 	cnd_init(&cnd);
 
-	int_padded status[n_threads];
+	int_padded status[n_comp_thrds];
 
-	for (int tx = 0; tx < n_threads; ++tx) {
+	for (int tx = 0; tx < n_comp_thrds; ++tx) {
 		thrds_info[tx].which_root = which_root;
 		thrds_info[tx].n_its = n_its;
 		thrds_info[tx].ib = tx;
-		thrds_info[tx].istep = n_threads;
+		thrds_info[tx].istep = n_comp_thrds;
 		thrds_info[tx].image_size = image_size;
 		thrds_info[tx].tx = tx;
 		thrds_info[tx].mtx = &mtx;
@@ -197,7 +205,7 @@ int main(int argc, char *argv[]){
 		thrd_info_check.which_root= which_root;
 		thrd_info_check.n_its = n_its;
 		thrd_info_check.image_size = image_size;
-		thrd_info_check.n_threads = n_threads;
+		thrd_info_check.n_comp_thrds = n_comp_thrds;
 		thrd_info_check.mtx = &mtx;
 		thrd_info_check.cnd = &cnd;
 		thrd_info_check.status = status;
