@@ -51,6 +51,7 @@ int main(int argc, char *argv[]){
 	int opt, val;
 
 	printf("\n---------- Newton ----------\n\n");
+
 	// read command line arguments -> nthreads, image_sz, order
 	parse_cmd_args(argc, argv);
 
@@ -64,11 +65,6 @@ int main(int argc, char *argv[]){
     // --> calculate newton iteration
 
     // write ppm files
-
-    // free variables
-	printf("Using %d threads\n", n_threads);
-	printf("Image size is %d\n", image_sz);
-	printf("Order is %d\n", order);
 
 	// Allocate double pointers to the rows of the two images but save the 
 	// the allocations of entries to a different thread
@@ -102,7 +98,7 @@ int main(int argc, char *argv[]){
 		thrds_info[tx].status = status;
 		status[tx].val = 0;
 
-		int r = thrd_create(thrds[tx], compute_thread, (void*) &thrds_info[tx]);
+		int r = thrd_create(&thrds[tx], compute_thread, (void*) &thrds_info[tx]);
     	if ( r != thrd_success ) {
 			fprintf(stderr, "failed to create thread\n");
 			exit(1);
@@ -114,6 +110,7 @@ int main(int argc, char *argv[]){
 		// thrd_detach(thrds[tx]);
 	}
 
+	// free variables
 	free(which_root);
 	free(no_its);
 
