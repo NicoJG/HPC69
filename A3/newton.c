@@ -115,7 +115,7 @@ check_compute_thread(
 
 		for ( ; ix < ibnd; ++ix) {
 			for (int jx = 0; jx < image_sz; ++jx) {
-				printf("%d, ", which_root[ix][jx]);
+				printf("%d, ", n_its[ix][jx]);
 			}
 			printf("\n");
 
