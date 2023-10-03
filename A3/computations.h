@@ -34,10 +34,8 @@ double complex newton_iteration(double complex x_prev, int degree) {
 	for (size_t ix = 0; ix < degree; ix++){
 		x_d *= x_prev;
 	}
-
 	x_next = ( (degree - 1) * x_d + 1) / (degree * x_d / x_prev);
-	printf(" For loop x_next = %f + i%f\n", creal(x_next), cimag(x_next));  
-	
+
 	/*
 	switch (degree) {
 		case 1:
