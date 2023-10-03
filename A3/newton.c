@@ -14,10 +14,10 @@ typedef struct {
 
 typedef struct {
 	float **which_root;
-	short **no_its;
+	short **n_its;
 	int ib;
 	int istep;
-	int sz;
+	int image_sz;
 	int tx;
 	mtx_t *mtx;
 	cnd_t *cnd;
@@ -26,9 +26,9 @@ typedef struct {
 
 typedef struct {
 	float **which_root;
-	short **no_its;
-	int sz;
-	int nthreads;
+	short **n_its;
+	int image_sz;
+	int n_threads;
 	mtx_t *mtx;
 	cnd_t *cnd;
 	int_padded *status;
@@ -39,6 +39,56 @@ compute_thread(
 	void *args
 ) {
 	
+	// Unpack arguments
+	const thrd_info_t *thrd_info = (thrd_info_t*) args;
+	float **which_root = thrd_info->which_root;
+	short **n_its = thrd_info->n_its;
+	const int ib = thrd_info->ib;
+	const int istep = thrd_info->istep;
+	const int image_sz = thrd_info->image_sz;
+	const int tx = thrd_info->tx;
+	mtx_t *mtx = thrd_info->mtx;
+	cnd_t *cnd = thrd_info->cnd;
+	int_padded *status = thrd_info->status;
+
+	// Allocate the rows of which_root and n_its directly here in the computation thread
+	for (int ix = ib; ix < image_sz; ix += istep) {
+		float *which_root_entrs = (float *) malloc(sizeof(float) * image_sz);
+		short *no_ints_entrs = (short *) malloc(sizeof(short) * image_sz);
+
+		// Do the computations here
+		for (int jx = 0; jx < image_sz; ++jx) {
+			which_root_entrs[jx] = jx; // DUMMY
+			no_ints_entrs[jx] = 2 * jx; // DUMMY
+		}
+
+		// Lock so we don't read and write to matrices at the same time
+		mtx_lock(mtx);
+		which_root[ix] = which_root_entrs;
+		n_its[ix] = no_ints_entrs;
+		status[tx].val = ix + istep;
+		mtx_unlock(mtx);
+		cnd_signal(cnd);
+	}
+
+	return 0;
+}
+
+int 
+check_compute_thread(
+	void *args
+) {
+	// Unpack arguments
+	const thrd_info_check_t *thrd_info = (thrd_info_check_t*) args;
+	float **which_root = thrd_info->which_root;
+	short **n_its = thrd_info->n_its;
+	const int image_size = thrd_info->image_sz;
+	const int n_threads = thrd_info->n_threads;
+	mtx_t *mtx = thrd_info->mtx;
+	cnd_t *cnd = thrd_info->cnd;
+	int_padded *status = thrd_info->status;
+
+
 }
 
 
@@ -51,6 +101,7 @@ int main(int argc, char *argv[]){
 	int opt, val;
 
 	printf("\n---------- Newton ----------\n\n");
+
 	// read command line arguments -> nthreads, image_sz, order
 	parse_cmd_args(argc, argv);
 
@@ -65,15 +116,10 @@ int main(int argc, char *argv[]){
 
     // write ppm files
 
-    // free variables
-	printf("Using %d threads\n", n_threads);
-	printf("Image size is %d\n", image_sz);
-	printf("Order is %d\n", order);
-
 	// Allocate double pointers to the rows of the two images but save the 
 	// the allocations of entries to a different thread
 	float **which_root = (float **) malloc(sizeof(float *) * image_sz);
-	short **no_its = (short **) malloc(sizeof(short *) * image_sz);
+	short **n_its = (short **) malloc(sizeof(short *) * image_sz);
 
 	// Initialise all variables needed for the threads
 	thrd_t thrds[n_threads];
@@ -92,17 +138,17 @@ int main(int argc, char *argv[]){
 
 	for (int tx = 0; tx < n_threads; ++tx) {
 		thrds_info[tx].which_root = which_root;
-		thrds_info[tx].no_its = no_its;
+		thrds_info[tx].n_its = n_its;
 		thrds_info[tx].ib = tx;
 		thrds_info[tx].istep = n_threads;
-		thrds_info[tx].sz = image_sz;
+		thrds_info[tx].image_sz = image_sz;
 		thrds_info[tx].tx = tx;
 		thrds_info[tx].mtx = &mtx;
 		thrds_info[tx].cnd = &cnd;
 		thrds_info[tx].status = status;
 		status[tx].val = 0;
 
-		int r = thrd_create(thrds[tx], compute_thread, (void*) &thrds_info[tx]);
+		int r = thrd_create(&thrds[tx], compute_thread, (void*) &thrds_info[tx]);
     	if ( r != thrd_success ) {
 			fprintf(stderr, "failed to create thread\n");
 			exit(1);
@@ -114,8 +160,9 @@ int main(int argc, char *argv[]){
 		// thrd_detach(thrds[tx]);
 	}
 
+	// free variables
 	free(which_root);
-	free(no_its);
+	free(n_its);
 
 	return 0;
 } 
