@@ -1,16 +1,15 @@
 CC = gcc
 CFLAGS = -O2 -march=native -g -lm
 
+HEADERS = global_vars.h cmd_args.h computations.h 
+
 .PHONY : all clean run
 
 all : \
 	exc_newton.exe \
 	exc_write_ppm.exe
 
-exc_newton.exe : \
-	newton.c \
-	# header.h
-	# ...
+exc_newton.exe : newton.c $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ $<
 
 exc_write_ppm.exe : \
