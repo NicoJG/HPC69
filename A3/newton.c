@@ -17,7 +17,7 @@ typedef struct {
 	short **n_its;
 	int ib;
 	int istep;
-	int image_sz;
+	int image_size;
 	int tx;
 	mtx_t *mtx;
 	cnd_t *cnd;
@@ -27,7 +27,7 @@ typedef struct {
 typedef struct {
 	float **which_root;
 	short **n_its;
-	int image_sz;
+	int image_size;
 	int n_threads;
 	mtx_t *mtx;
 	cnd_t *cnd;
@@ -45,19 +45,19 @@ compute_thread(
 	short **n_its = thrd_info->n_its;
 	const int ib = thrd_info->ib;
 	const int istep = thrd_info->istep;
-	const int image_sz = thrd_info->image_sz;
+	const int image_size = thrd_info->image_size;
 	const int tx = thrd_info->tx;
 	mtx_t *mtx = thrd_info->mtx;
 	cnd_t *cnd = thrd_info->cnd;
 	int_padded *status = thrd_info->status;
 
 	// Allocate the rows of which_root and n_its directly here in the computation thread
-	for (int ix = ib; ix < image_sz; ix += istep) {
-		float *which_root_entrs = (float *) malloc(sizeof(float) * image_sz);
-		short *no_ints_entrs = (short *) malloc(sizeof(short) * image_sz);
+	for (int ix = ib; ix < image_size; ix += istep) {
+		float *which_root_entrs = (float *) malloc(sizeof(float) * image_size);
+		short *no_ints_entrs = (short *) malloc(sizeof(short) * image_size);
 
 		// Do the computations here
-		for (int jx = 0; jx < image_sz; ++jx) {
+		for (int jx = 0; jx < image_size; ++jx) {
 			which_root_entrs[jx] = jx; // DUMMY
 			no_ints_entrs[jx] = 2 * jx; // DUMMY
 		}
@@ -82,20 +82,20 @@ check_compute_thread(
 	const thrd_info_check_t *thrd_info = (thrd_info_check_t*) args;
 	float **which_root = thrd_info->which_root;
 	short **n_its = thrd_info->n_its;
-	const int image_sz = thrd_info->image_sz;
+	const int image_size = thrd_info->image_size;
 	const int n_threads = thrd_info->n_threads;
 	mtx_t *mtx = thrd_info->mtx;
 	cnd_t *cnd = thrd_info->cnd;
 	int_padded *status = thrd_info->status;
 
 	// No incrementation in this loop
-	for (int ix = 0, ibnd; ix < image_sz; ) {
+	for (int ix = 0, ibnd; ix < image_size; ) {
 
 		// Check if new line is available
 		for (mtx_lock(mtx); ; ) {
 			
 			// Extract status variables
-			ibnd = image_sz;
+			ibnd = image_size;
 			for (int tx = 0; tx < n_threads; ++tx) {
 				if (ibnd > status[tx].val) {
 					ibnd = status[tx].val;
@@ -114,7 +114,7 @@ check_compute_thread(
 		fprintf(stderr, "checking until %i\n", ibnd);
 
 		for ( ; ix < ibnd; ++ix) {
-			for (int jx = 0; jx < image_sz; ++jx) {
+			for (int jx = 0; jx < image_size; ++jx) {
 				printf("%d, ", n_its[ix][jx]);
 			}
 			printf("\n");
@@ -131,18 +131,12 @@ check_compute_thread(
 
 
 int main(int argc, char *argv[]){
-	
-	//Default values
-	int n_threads = DEFAULT_THREADS;
-	int image_sz = DEFAULT_IMAGE_SIZE;
-	int order = DEFAULT_ORDER;
-	int opt, val;
 
+	// Start program
 	printf("\n---------- Newton ----------\n\n");
 
-	// read command line arguments -> nthreads, image_sz, order
+	// read command line arguments -> nthreads, image_size, order
 	parse_cmd_args(argc, argv);
-
     // setup arrays -> attractors, convergences, roots
 
     // iterate over pixels
@@ -156,8 +150,8 @@ int main(int argc, char *argv[]){
 
 	// Allocate double pointers to the rows of the two images but save the 
 	// the allocations of entries to a different thread
-	float **which_root = (float **) malloc(sizeof(float *) * image_sz);
-	short **n_its = (short **) malloc(sizeof(short *) * image_sz);
+	float **which_root = (float **) malloc(sizeof(float *) * image_size);
+	short **n_its = (short **) malloc(sizeof(short *) * image_size);
 
 	// Initialise all variables needed for the threads
 	thrd_t thrds[n_threads];
@@ -179,7 +173,7 @@ int main(int argc, char *argv[]){
 		thrds_info[tx].n_its = n_its;
 		thrds_info[tx].ib = tx;
 		thrds_info[tx].istep = n_threads;
-		thrds_info[tx].image_sz = image_sz;
+		thrds_info[tx].image_size = image_size;
 		thrds_info[tx].tx = tx;
 		thrds_info[tx].mtx = &mtx;
 		thrds_info[tx].cnd = &cnd;
@@ -202,7 +196,7 @@ int main(int argc, char *argv[]){
 	{
 		thrd_info_check.which_root= which_root;
 		thrd_info_check.n_its = n_its;
-		thrd_info_check.image_sz = image_sz;
+		thrd_info_check.image_size = image_size;
 		thrd_info_check.n_threads = n_threads;
 		thrd_info_check.mtx = &mtx;
 		thrd_info_check.cnd = &cnd;
