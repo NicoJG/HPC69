@@ -112,6 +112,9 @@ int write_thread(void *args) {
 			}
 			printf("\n");
 
+			//write_ppm(roots_idxs[ix], file_attractors);
+			//write_ppm(n_its[ix], file_convergence);
+
 			// Now we can free the rows of the arrays
 			free(root_idxs[ix]);
 			free(n_its[ix]);
@@ -143,6 +146,24 @@ int main(int argc, char *argv[]){
 	roots = (double complex *) malloc(sizeof(double complex) * order);
 	for (int i_root = 0; i_root < order; i_root++) {
 		roots[i_root] = get_root_by_index(i_root);
+	}
+
+	// Open files for writing
+	char filename[24];
+	sprintf(filename, "newton_attractors_x%d.ppm", order);
+	FILE *file_attractors = fopen(filename, "w");
+
+	if (file_attractors == NULL){
+		printf("error opening file\n");
+		return -1;
+	}
+	
+	sprintf(filename, "newton_convergence_x%d.ppm", order);
+	FILE *file_convergence = fopen(filename, "w");
+
+	if (file_convergence == NULL){
+		printf("error opening file\n");
+		return -1;
 	}
 
     // iterate over pixels
@@ -225,15 +246,19 @@ int main(int argc, char *argv[]){
 	free(n_its);
 	free(roots);
 
+	// Close files
+	fclose(file_attractors);
+	fclose(file_convergence);
+
 	return 0;
 } 
 
 
 
 /*
-I think a good way of designing the program is to let a couple of threads work together on one line at a time.
-By doing this we will finish line-by-line and be able to write the lines as we go along with the computations, 
-using a different thread. I think this is what's being done in the video on multi-stage processing.
+   I think a good way of designing the program is to let a couple of threads work together on one line at a time.
+   By doing this we will finish line-by-line and be able to write the lines as we go along with the computations, 
+   using a different thread. I think this is what's being done in the video on multi-stage processing.
 
 // Isak
 

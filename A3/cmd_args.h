@@ -60,7 +60,7 @@ void parse_cmd_args(int argc, char *argv[]) {
 			}
 		if (optind < argc) {
 			order = atoi(argv[optind]);
-			if (order > 10){
+			if (order > 9){
 				printf("The order given (%d) is too large... Using default maximum value: %d\n", order, MAX_ORDER);
 				order = MAX_ORDER;
 			}

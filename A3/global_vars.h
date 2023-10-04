@@ -17,7 +17,7 @@
 
 #define MAX_THREADS 10
 #define MAX_IMAGE_SIZE 100000
-#define MAX_ORDER 10
+#define MAX_ORDER 9
 
 #define MAX_ITERATIONS 128
 #define CONVERGENCE_DIST 1e-3
