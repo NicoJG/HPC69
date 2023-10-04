@@ -1,5 +1,7 @@
 #pragma once
 
+#include <complex.h>
+
 /////////////////////////////////////////////
 // Constants
 #define PI 3.14159265358979323846
@@ -17,6 +19,9 @@
 #define MAX_IMAGE_SIZE 100000
 #define MAX_ORDER 10
 
+#define MAX_ITERATIONS 128
+#define CONVERGENCE_DIST 1e-3
+
 
 /////////////////////////////////////////////
 // Global variables
@@ -26,3 +31,4 @@ int order = DEFAULT_ORDER;
 
 short **root_idxs;
 short **n_its;
+double complex *roots;

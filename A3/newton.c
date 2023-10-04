@@ -44,9 +44,6 @@ int compute_thread(void *args) {
 	cnd_t *cnd = thrd_info->cnd;
 	int_padded *status = thrd_info->status;
 
-	// Initialise needed variables
-	double complex x;
-
 	// Iterate through the rows that are assigned to this thread
 	for (int ix = ix_start; ix < image_size; ix += ix_step) {
 		// Allocate memory for row ix
@@ -56,14 +53,10 @@ int compute_thread(void *args) {
 		// Do the Newton iteration on each entry of row ix
 		for (int jx = 0; jx < image_size; ++jx) {
 			// Get the position that (ix,jx) corresponds to
-			x = get_x0(ix, jx); // Don't use this yet but I guess we will eventually!
+			double complex x0 = get_x0(ix, jx); 
 
-			// perform newton iteration
-
-			// Save which root the Newton method converged to
-			root_idxs_row[jx] = jx; // DUMMY
-			// Save how many iterations the Newton method took
-			n_its_row[jx] = ix; // DUMMY
+			// perform newton iteration and save the result in the jx item
+			newton_iteration(x0, root_idxs_row + jx, n_its_row + jx);
 		}
 
 		// Lock so we don't read and write to matrices at the same time
@@ -114,7 +107,8 @@ int write_thread(void *args) {
 		// SHOULD WRITE THE IMAGES HERE
 		for ( ; ix < ibnd; ++ix) {
 			for (int jx = 0; jx < image_size; ++jx) {
-				printf("%d, ", n_its[ix][jx]);
+				
+				printf("%d, ", root_idxs[ix][jx]);
 			}
 			printf("\n");
 
@@ -139,6 +133,17 @@ int main(int argc, char *argv[]){
 
 	// LAYOUT:
     // setup arrays -> attractors, convergences, roots
+	// Allocate double pointers to the rows of the two images but allocate
+	// the row entries in the threads as we go
+	// Global variables:
+	root_idxs = (short **) malloc(sizeof(short *) * image_size);
+	n_its = (short **) malloc(sizeof(short *) * image_size);
+
+	// Prepare a list of the roots
+	roots = (double complex *) malloc(sizeof(double complex) * order);
+	for (int i_root = 0; i_root < order; i_root++) {
+		roots[i_root] = get_root_by_index(i_root);
+	}
 
     // iterate over pixels
     // -> get position (x0)
@@ -149,11 +154,6 @@ int main(int argc, char *argv[]){
 
     // write ppm files
 
-	// Allocate double pointers to the rows of the two images but allocate
-	// the entries in the threads as we go
-	// Global variables:
-	root_idxs = (short **) malloc(sizeof(short *) * image_size);
-	n_its = (short **) malloc(sizeof(short *) * image_size);
 
 	// Initialise all variables needed for the threads
 
@@ -223,6 +223,7 @@ int main(int argc, char *argv[]){
 	// free variables
 	free(root_idxs);
 	free(n_its);
+	free(roots);
 
 	return 0;
 } 
