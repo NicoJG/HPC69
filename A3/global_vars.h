@@ -23,3 +23,6 @@
 int n_threads = DEFAULT_THREADS;
 int image_size = DEFAULT_IMAGE_SIZE;
 int order = DEFAULT_ORDER;
+
+short **root_idxs;
+short **n_its;

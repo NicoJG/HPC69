@@ -67,6 +67,12 @@ void parse_cmd_args(int argc, char *argv[]) {
 		}
     }
 
+	// The program will fail if n_threads > image_size
+	if (n_threads > image_size) {
+		fprintf(stderr, "you cant assign more threads than rows and cols in the image.\n");
+		exit(1);
+	}
+
 	printf("Using %d threads\n", n_threads);
 	printf("Image size is %d\n", image_size);
 	printf("Order is %d\n", order);

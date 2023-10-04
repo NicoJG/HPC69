@@ -6,48 +6,39 @@
 #include "cmd_args.h"
 #include "computations.h"
 
+// Remember that we use global variables (in global_vars.h)
+// This way we don't need to send some vars to the thread functions
+// Those variables can be accessed everywhere
+// but make sure not to write to those vars at the same time (in different threads)
 
 
+// I don't know why we need this padded int /Nico
 typedef struct {
 	int val;
 	char pad[60]; 
 } int_padded;
 
 typedef struct {
-	float **which_root;
-	short **n_its;
-	int ib;
-	int istep;
-	int image_size;
-	int tx;
+	int ix_start;
+	int ix_step;
+	int i_thrd;
 	mtx_t *mtx;
 	cnd_t *cnd;
 	int_padded *status;
-} thrd_info_t;
+} thrd_info_compute_t;
 
 typedef struct {
-	float **which_root;
-	short **n_its;
-	int image_size;
-	int n_threads;
 	mtx_t *mtx;
 	cnd_t *cnd;
 	int_padded *status;
-} thrd_info_check_t;
+} thrd_info_write_t;
 
-int 
-compute_thread(
-	void *args
-) {
-	
+int compute_thread(void *args) {
 	// Unpack arguments
-	const thrd_info_t *thrd_info = (thrd_info_t*) args;
-	float **which_root = thrd_info->which_root;
-	short **n_its = thrd_info->n_its;
-	const int ib = thrd_info->ib;
-	const int istep = thrd_info->istep;
-	const int image_size = thrd_info->image_size;
-	const int tx = thrd_info->tx;
+	const thrd_info_compute_t *thrd_info = (thrd_info_compute_t*) args;
+	const int ix_start = thrd_info->ix_start;
+	const int ix_step = thrd_info->ix_step;
+	const int i_thrd = thrd_info->i_thrd;
 	mtx_t *mtx = thrd_info->mtx;
 	cnd_t *cnd = thrd_info->cnd;
 	int_padded *status = thrd_info->status;
@@ -55,24 +46,31 @@ compute_thread(
 	// Initialise needed variables
 	double complex x;
 
-	// Allocate the rows of which_root and n_its directly here in the computation thread
-	for (int ix = ib; ix < image_size; ix += istep) {
-		float *which_root_entrs = (float *) malloc(sizeof(float) * image_size);
-		short *no_ints_entrs = (short *) malloc(sizeof(short) * image_size);
+	// Iterate through the rows that are assigned to this thread
+	for (int ix = ix_start; ix < image_size; ix += ix_step) {
+		// Allocate memory for row ix
+		short *root_idxs_row = (short *) malloc(sizeof(short) * image_size);
+		short *n_its_row = (short *) malloc(sizeof(short) * image_size);
 
-		// Do the computations here
+		// Do the Newton iteration on each entry of row ix
 		for (int jx = 0; jx < image_size; ++jx) {
+			// Get the position that (ix,jx) corresponds to
 			x = get_x0(ix, jx); // Don't use this yet but I guess we will eventually!
 
-			which_root_entrs[jx] = jx; // DUMMY
-			no_ints_entrs[jx] = ix; // DUMMY
+			// perform newton iteration
+
+			// Save which root the Newton method converged to
+			root_idxs_row[jx] = jx; // DUMMY
+			// Save how many iterations the Newton method took
+			n_its_row[jx] = ix; // DUMMY
 		}
 
 		// Lock so we don't read and write to matrices at the same time
 		mtx_lock(mtx);
-		which_root[ix] = which_root_entrs;
-		n_its[ix] = no_ints_entrs;
-		status[tx].val = ix + istep;
+		root_idxs[ix] = root_idxs_row;
+		n_its[ix] = n_its_row;
+		// update which row this thread is working on next
+		status[i_thrd].val = ix + ix_step; 
 		mtx_unlock(mtx);
 		cnd_signal(cnd);
 	}
@@ -80,16 +78,9 @@ compute_thread(
 	return 0;
 }
 
-int 
-check_compute_thread(
-	void *args
-) {
+int write_thread(void *args) {
 	// Unpack arguments
-	const thrd_info_check_t *thrd_info = (thrd_info_check_t*) args;
-	float **which_root = thrd_info->which_root;
-	short **n_its = thrd_info->n_its;
-	const int image_size = thrd_info->image_size;
-	const int n_threads = thrd_info->n_threads;
+	const thrd_info_write_t *thrd_info = (thrd_info_write_t*) args;
 	mtx_t *mtx = thrd_info->mtx;
 	cnd_t *cnd = thrd_info->cnd;
 	int_padded *status = thrd_info->status;
@@ -100,11 +91,11 @@ check_compute_thread(
 		// Check if new row is available
 		for (mtx_lock(mtx); ; ) {
 			
-			// Extract status variables
+			// Get the minimum of the status values
 			ibnd = image_size;
-			for (int tx = 0; tx < n_threads; ++tx) {
-				if (ibnd > status[tx].val) {
-					ibnd = status[tx].val;
+			for (int i_thrd = 0; i_thrd < n_threads; ++i_thrd) {
+				if (ibnd > status[i_thrd].val) {
+					ibnd = status[i_thrd].val;
 				}
 			}
 
@@ -127,7 +118,7 @@ check_compute_thread(
 			printf("\n");
 
 			// Now we can free the rows of the arrays
-			free(which_root[ix]);
+			free(root_idxs[ix]);
 			free(n_its[ix]);
 		}	
 
@@ -145,12 +136,6 @@ int main(int argc, char *argv[]){
 	// read command line arguments -> nthreads, image_size, order
 	parse_cmd_args(argc, argv);
 
-	// The program will fail if n_threads > image_size
-	if (n_threads > image_size) {
-		fprintf(stderr, "you cant assign more threads than rows and cols in the image.\n");
-		return 1;
-	}
-
 	// LAYOUT:
     // setup arrays -> attractors, convergences, roots
 
@@ -165,16 +150,17 @@ int main(int argc, char *argv[]){
 
 	// Allocate double pointers to the rows of the two images but allocate
 	// the entries in the threads as we go
-	float **which_root = (float **) malloc(sizeof(float *) * image_size);
-	short **n_its = (short **) malloc(sizeof(short *) * image_size);
+	// Global variables:
+	root_idxs = (short **) malloc(sizeof(short *) * image_size);
+	n_its = (short **) malloc(sizeof(short *) * image_size);
 
 	// Initialise all variables needed for the threads
 
-	thrd_t thrds[n_threads];
-	thrd_info_t thrds_info[n_threads];
+	thrd_t thrds_compute[n_threads];
+	thrd_info_compute_t thrds_info_compute[n_threads];
 
-	thrd_t thrd_check;
-	thrd_info_check_t thrd_info_check;
+	thrd_t thrd_write;
+	thrd_info_write_t thrd_info_write;
 
 	mtx_t mtx;
 	mtx_init(&mtx, mtx_plain);
@@ -184,19 +170,21 @@ int main(int argc, char *argv[]){
 
 	int_padded status[n_threads];
 
-	for (int tx = 0; tx < n_threads; ++tx) {
-		thrds_info[tx].which_root = which_root;
-		thrds_info[tx].n_its = n_its;
-		thrds_info[tx].ib = tx;
-		thrds_info[tx].istep = n_threads;
-		thrds_info[tx].image_size = image_size;
-		thrds_info[tx].tx = tx;
-		thrds_info[tx].mtx = &mtx;
-		thrds_info[tx].cnd = &cnd;
-		thrds_info[tx].status = status;
-		status[tx].val = 0;
+	// Start the computation threads
+	for (int i_thrd = 0; i_thrd < n_threads; ++i_thrd) {
+		thrds_info_compute[i_thrd].ix_start = i_thrd;
+		thrds_info_compute[i_thrd].ix_step = n_threads;
+		thrds_info_compute[i_thrd].i_thrd = i_thrd;
+		thrds_info_compute[i_thrd].mtx = &mtx;
+		thrds_info_compute[i_thrd].cnd = &cnd;
+		thrds_info_compute[i_thrd].status = status;
+		status[i_thrd].val = 0;
 
-		int r = thrd_create(&thrds[tx], compute_thread, (void*) &thrds_info[tx]);
+		int r = thrd_create(
+					&thrds_compute[i_thrd], 
+					compute_thread, 
+					(void*) &thrds_info_compute[i_thrd]
+				);
     	if ( r != thrd_success ) {
 			fprintf(stderr, "failed to create thread\n");
 			exit(1);
@@ -205,33 +193,34 @@ int main(int argc, char *argv[]){
 		// Martin adds "thrd_detach" here but I'm not entirely sure what it does!
 		// Isak
 
-		thrd_detach(thrds[tx]);
+		thrd_detach(thrds_compute[i_thrd]);
 	}
 
-	// Check status
+	// Start the writing thread
 	{
-		thrd_info_check.which_root= which_root;
-		thrd_info_check.n_its = n_its;
-		thrd_info_check.image_size = image_size;
-		thrd_info_check.n_threads = n_threads;
-		thrd_info_check.mtx = &mtx;
-		thrd_info_check.cnd = &cnd;
-		thrd_info_check.status = status;
+		thrd_info_write.mtx = &mtx;
+		thrd_info_write.cnd = &cnd;
+		thrd_info_write.status = status;
 
-		int r = thrd_create(&thrd_check, check_compute_thread, (void*) (&thrd_info_check));
+		int r = thrd_create(
+					&thrd_write, 
+					write_thread, 
+					(void*) (&thrd_info_write)
+				);
 		if ( r != thrd_success ) {
 			fprintf(stderr, "failed to create thread\n");
 			exit(1);
 		}
   	}
 
-  {
-    int r;
-    thrd_join(thrd_check, &r);
-  }
+	// wait until the writing thread has finished
+	{
+		int r;
+		thrd_join(thrd_write, &r);
+	}
 
 	// free variables
-	free(which_root);
+	free(root_idxs);
 	free(n_its);
 
 	return 0;
