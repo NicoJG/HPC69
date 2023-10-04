@@ -5,6 +5,7 @@
 #include "global_vars.h"
 #include "cmd_args.h"
 #include "computations.h"
+#include "write_ppm.h"
 
 // Remember that we use global variables (in global_vars.h)
 // This way we don't need to send some vars to the thread functions
@@ -29,6 +30,8 @@ typedef struct {
 } thrd_info_compute_t;
 
 typedef struct {
+	FILE *file_attractors;
+	FILE *file_convergence;
 	mtx_t *mtx;
 	cnd_t *cnd;
 	int_padded *status;
@@ -75,6 +78,8 @@ int compute_thread(void *args) {
 int write_thread(void *args) {
 	// Unpack arguments
 	const thrd_info_write_t *thrd_info = (thrd_info_write_t*) args;
+	FILE *file_attractors = thrd_info->file_attractors;
+	FILE *file_convergence = thrd_info->file_convergence;
 	mtx_t *mtx = thrd_info->mtx;
 	cnd_t *cnd = thrd_info->cnd;
 	int_padded *status = thrd_info->status;
@@ -102,24 +107,17 @@ int write_thread(void *args) {
 			}
 		}
 
-		fprintf(stderr, "checking until %i\n", ibnd);
-
 		// SHOULD WRITE THE IMAGES HERE
+		// iterate through the rows
 		for ( ; ix < ibnd; ++ix) {
-			for (int jx = 0; jx < image_size; ++jx) {
-
-				printf("%d, ", n_its[ix][jx]);
-			}
-			printf("\n");
-
-			//write_ppm(roots_idxs[ix], file_attractors);
-			//write_ppm(n_its[ix], file_convergence);
+			write_attractors_row(file_attractors, root_idxs[ix]);
+			write_convergence_row(file_convergence, n_its[ix]);
 
 			// Now we can free the rows of the arrays
 			free(root_idxs[ix]);
 			free(n_its[ix]);
 		}	
-
+		fprintf(stderr, "Wrote until row %i/%i\n", ibnd, image_size);
 	}
 
 	return 0;
@@ -150,7 +148,7 @@ int main(int argc, char *argv[]){
 	}
 
 	// Open files for writing
-	char filename[24];
+	char filename[50];
 	sprintf(filename, "newton_attractors_x%d.ppm", order);
 	FILE *file_attractors = fopen(filename, "w");
 
@@ -166,6 +164,10 @@ int main(int argc, char *argv[]){
 		printf("error opening file\n");
 		return -1;
 	}
+
+	// write the PPM headers
+	write_ppm_header(file_attractors);
+	write_ppm_header(file_convergence);
 
     // iterate over pixels
     // -> get position (x0)
@@ -221,6 +223,8 @@ int main(int argc, char *argv[]){
 
 	// Start the writing thread
 	{
+		thrd_info_write.file_attractors = file_attractors;
+		thrd_info_write.file_convergence = file_convergence;
 		thrd_info_write.mtx = &mtx;
 		thrd_info_write.cnd = &cnd;
 		thrd_info_write.status = status;

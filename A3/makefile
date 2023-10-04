@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -O2 -march=native -g -lm
 
-HEADERS = global_vars.h cmd_args.h computations.h 
+HEADERS = global_vars.h cmd_args.h computations.h write_ppm.h
 
 .PHONY : all clean run
 
