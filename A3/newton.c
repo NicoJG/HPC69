@@ -107,8 +107,8 @@ int write_thread(void *args) {
 		// SHOULD WRITE THE IMAGES HERE
 		for ( ; ix < ibnd; ++ix) {
 			for (int jx = 0; jx < image_size; ++jx) {
-				
-				printf("%d, ", root_idxs[ix][jx]);
+
+				printf("%d, ", n_its[ix][jx]);
 			}
 			printf("\n");
 
@@ -143,6 +143,7 @@ int main(int argc, char *argv[]){
 	roots = (double complex *) malloc(sizeof(double complex) * order);
 	for (int i_root = 0; i_root < order; i_root++) {
 		roots[i_root] = get_root_by_index(i_root);
+		printf("root %d: %f + %fi\n", i_root, creal(roots[i_root]), cimag(roots[i_root]));
 	}
 
     // iterate over pixels

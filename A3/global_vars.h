@@ -20,7 +20,10 @@
 #define MAX_ORDER 10
 
 #define MAX_ITERATIONS 128
+#define MAX_DIST_TO_ORIGIN 1e-3
+#define MAX_VALUE 1e10
 #define CONVERGENCE_DIST 1e-3
+
 
 
 /////////////////////////////////////////////

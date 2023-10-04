@@ -17,7 +17,7 @@ double complex get_x0(short i_row, short i_col) {
 
 double complex get_root_by_index(short i_root) {
     assert(0 <= i_root && i_root < order);
-    return exp(I*(2 * PI * i_root / order));
+    return cexp(I*(2 * PI * i_root / order));
 }
 
 double complex newton_iteration_step(double complex x_prev, int degree) {
@@ -86,6 +86,13 @@ void newton_iteration(double complex x0, short *root_idx, short *n_its) {
 	double complex x = x0;
 	for (short i_iter = 0; i_iter < MAX_ITERATIONS; i_iter++) {
 		x = newton_iteration_step(x, order);
+
+		if ((cabs(x) < CONVERGENCE_DIST) || 
+			(creal(x) > MAX_VALUE) || 
+			(cimag(x) > MAX_VALUE)) {
+			// This won't converge anymore
+			break;
+		}
 
 		for (short i_root = 0; i_root < order; i_root++) {
 			if (cabs(x - roots[i_root]) < CONVERGENCE_DIST) {
