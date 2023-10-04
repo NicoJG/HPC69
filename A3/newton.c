@@ -13,6 +13,7 @@
 
 
 // I don't know why we need this padded int /Nico
+// Neither do I! It's used for the status variable but I'm unsure why we need pad /Isak
 typedef struct {
 	int val;
 	char pad[60]; 
@@ -91,7 +92,7 @@ int write_thread(void *args) {
 		// Check if new row is available
 		for (mtx_lock(mtx); ; ) {
 			
-			// Get the minimum of the status values
+			// Get the minimum of the status values (I think this ensures rows are not written out of order)
 			ibnd = image_size;
 			for (int i_thrd = 0; i_thrd < n_threads; ++i_thrd) {
 				if (ibnd > status[i_thrd].val) {
