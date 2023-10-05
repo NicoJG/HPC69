@@ -13,3 +13,4 @@ exc_newton.exe : newton.c $(HEADERS)
 
 clean : 
 	rm -f exc_newton.exe
+	rm -f *.ppm
