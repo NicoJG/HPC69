@@ -29,14 +29,16 @@ double complex newton_iteration_step(double complex x_prev, int degree) {
 	               d * x^(d-1)
 	*/
 	double complex x_next;
-	double complex x_d = 1;
-
+	//double complex x_d = 1;
+	
+	/*
 	for (size_t ix = 0; ix < degree; ix++){
 		x_d *= x_prev;
 	}
 	x_next = ( (degree - 1) * x_d + 1) / (degree * x_d / x_prev);
 
-	/*
+	*/
+
 	switch (degree) {
 		case 1:
 			x_next = 1;
@@ -70,15 +72,11 @@ double complex newton_iteration_step(double complex x_prev, int degree) {
 			x_next = (8 * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev + 1) / 
 				 (9 * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev);
 			break;
-		case 10:
-			x_next = (9 * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev + 1) / 
-				 (10 * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev);
-			break;
 		default:
 			fprintf(stderr, "unexpected degree\n");
 			exit(1);
 	}
-	*/
+
 	return x_next;
 }
 
