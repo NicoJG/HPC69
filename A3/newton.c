@@ -88,14 +88,13 @@ int write_thread(void *args) {
 	for (int ix = 0, ibnd; ix < image_size; ) {
 
 		// Check if new row is available
-		if (n_threads > 1)
 		for (mtx_lock(mtx); ; ) {
 			
 			// Get the minimum of the status values (I think this ensures rows are not written out of order)
 			// I agree, kinda, I think it's to make sure all the rows between ix and ibnd are actually done
 			// before writing them to the file and not just the random values from initialization
 			ibnd = image_size;
-			for (int i_thrd = 0; i_thrd < n_threads-1; ++i_thrd) {
+			for (int i_thrd = 0; i_thrd < n_threads; ++i_thrd) {
 				if (ibnd > status[i_thrd].val) {
 					ibnd = status[i_thrd].val;
 				}
@@ -108,11 +107,6 @@ int write_thread(void *args) {
 				mtx_unlock(mtx);
 				break;
 			}
-		}
-
-		if (n_threads == 1) {
-			// we only write after computing everything
-			ibnd = image_size;
 		}
 
 		// SHOULD WRITE THE IMAGES HERE
@@ -186,14 +180,11 @@ int main(int argc, char *argv[]){
 
     // write ppm files
 
-	int n_threads_compute = n_threads - 1;
-	if (n_threads_compute == 0) 
-		n_threads_compute = 1;
 
 	// Initialise all variables needed for the threads
 
-	thrd_t thrds_compute[n_threads_compute];
-	thrd_info_compute_t thrds_info_compute[n_threads_compute];
+	thrd_t thrds_compute[n_threads];
+	thrd_info_compute_t thrds_info_compute[n_threads];
 
 	thrd_t thrd_write;
 	thrd_info_write_t thrd_info_write;
@@ -204,12 +195,12 @@ int main(int argc, char *argv[]){
 	cnd_t cnd;
 	cnd_init(&cnd);
 
-	int_padded status[n_threads_compute];
+	int_padded status[n_threads];
 
 	// Start the computation threads
-	for (int i_thrd = 0; i_thrd < n_threads_compute; ++i_thrd) {
+	for (int i_thrd = 0; i_thrd < n_threads; ++i_thrd) {
 		thrds_info_compute[i_thrd].ix_start = i_thrd;
-		thrds_info_compute[i_thrd].ix_step = n_threads_compute;
+		thrds_info_compute[i_thrd].ix_step = n_threads;
 		thrds_info_compute[i_thrd].i_thrd = i_thrd;
 		thrds_info_compute[i_thrd].mtx = &mtx;
 		thrds_info_compute[i_thrd].cnd = &cnd;
@@ -229,15 +220,7 @@ int main(int argc, char *argv[]){
 		// Martin adds "thrd_detach" here but I'm not entirely sure what it does!
 		// Isak
 
-		if (n_threads > 1)
-			thrd_detach(thrds_compute[i_thrd]);
-	}
-
-	if (n_threads == 1) {
-		// we have to wait for the computation to finish 
-		// before we can start the writing thread
-		int r;
-		thrd_join(thrds_compute[0], &r);
+		thrd_detach(thrds_compute[i_thrd]);
 	}
 
 	// Start the writing thread
@@ -253,7 +236,6 @@ int main(int argc, char *argv[]){
 					write_thread, 
 					(void*) (&thrd_info_write)
 				);
-
 		if ( r != thrd_success ) {
 			fprintf(stderr, "failed to create thread\n");
 			exit(1);
