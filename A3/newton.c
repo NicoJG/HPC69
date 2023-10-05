@@ -91,6 +91,8 @@ int write_thread(void *args) {
 		for (mtx_lock(mtx); ; ) {
 			
 			// Get the minimum of the status values (I think this ensures rows are not written out of order)
+			// I agree, kinda, I think it's to make sure all the rows between ix and ibnd are actually done
+			// before writing them to the file and not just the random values from initialization
 			ibnd = image_size;
 			for (int i_thrd = 0; i_thrd < n_threads; ++i_thrd) {
 				if (ibnd > status[i_thrd].val) {
