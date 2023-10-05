@@ -6,6 +6,7 @@
 
 #include "global_vars.h"
 
+static inline
 void parse_cmd_args(int argc, char *argv[]) {
     int opt, val;
 

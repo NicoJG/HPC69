@@ -25,12 +25,14 @@ RGBColor colors[10] = {
     {128, 128, 128}  // Gray
 };
 
+static inline
 void write_ppm_header(FILE* file) {
     fprintf(file, "P3\n");
     fprintf(file, "%d %d\n", image_size, image_size);
     fprintf(file, "%d\n", MAX_COLOR_VALUE);
 }
 
+static inline
 void write_attractors_row(FILE *file, short *root_idxs_row) {
     int str_length = CHARS_PER_PIXEL * image_size;
     char *str_row = (char*) malloc(sizeof(char) * (str_length + 1)); // +1 for the string terminating character
@@ -46,6 +48,7 @@ void write_attractors_row(FILE *file, short *root_idxs_row) {
     free(str_row);
 }
 
+static inline
 void write_convergence_row(FILE *file, short *n_its_row) {
     int str_length = CHARS_PER_PIXEL * image_size;
     char *str_row = (char*) malloc(sizeof(char) * (str_length + 1)); // +1 for the string terminating character

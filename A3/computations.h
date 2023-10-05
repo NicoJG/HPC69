@@ -8,6 +8,7 @@
 
 #include "global_vars.h"
 
+static inline
 double complex get_x0(short i_row, short i_col) {
     double complex x0 = 0;
     x0 +=    X_MIN_RE + (X_MAX_RE-X_MIN_RE) * i_row / image_size;
@@ -15,11 +16,13 @@ double complex get_x0(short i_row, short i_col) {
     return x0;
 }
 
+static inline
 double complex get_root_by_index(short i_root) {
     assert(0 <= i_root && i_root < order);
     return cexp(I*(2 * PI * i_root / order));
 }
 
+static inline
 double complex newton_iteration_step(double complex x_prev, int degree) {
 
 	// Analytical expression is 	
@@ -80,6 +83,7 @@ double complex newton_iteration_step(double complex x_prev, int degree) {
 	return x_next;
 }
 
+static inline
 void newton_iteration(double complex x0, short *root_idx, short *n_its) {
 	double complex x = x0;
 	for (short i_iter = 0; i_iter < MAX_ITERATIONS; i_iter++) {
