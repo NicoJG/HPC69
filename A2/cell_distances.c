@@ -17,19 +17,19 @@ int parse_num_threads(int argc, char *argv[]) {
 			switch(opt) {
 				case 't':
 					if ((val = atoi(optarg)) == 0) {
-						printf("'%s' is not a valid integer, using default number of threads, %d.\n", optarg, n_threads);
+						fprintf(stderr, "'%s' is not a valid integer, using default number of threads, %d.\n", optarg, n_threads);
 						break;
 					}
 					n_threads = val;
-					printf("Using %d threads.\n", n_threads);
+					fprintf(stderr, "Using %d threads.\n", n_threads);
 					break;
 				case '?':
-					printf("Unknown option, using default number of threads, %d.\n", n_threads);
+					fprintf(stderr, "Unknown option, using default number of threads, %d.\n", n_threads);
 					break;
 			}
 		}
 	} else {
-		printf("Using default number of threads, %d.\n", n_threads);
+		fprintf(stderr, "Using default number of threads, %d.\n", n_threads);
 	}
 
 	return n_threads;
@@ -65,10 +65,10 @@ void determine_file_and_buffer_size(
 	*nbr_buffer = *file_size / *buffer_size; 
 	*nbr_lines = *buffer_size / BYTES_PER_LINE;
 
-	printf("File size: %lu bytes\n", *file_size);
-	printf("Buffer size: %u bytes\n", *buffer_size);
-	printf("Number of buffers: %u\n", *nbr_buffer);
-	printf("Number of lines per buffer: %u lines\n", *nbr_lines);
+	fprintf(stderr, "File size: %lu bytes\n", *file_size);
+	fprintf(stderr, "Buffer size: %u bytes\n", *buffer_size);
+	fprintf(stderr, "Number of buffers: %u\n", *nbr_buffer);
+	fprintf(stderr, "Number of lines per buffer: %u lines\n", *nbr_lines);
 }
 
 static inline
@@ -154,13 +154,12 @@ int main(int argc, char *argv[]){
 		count_distances_between(coords_fixed, coords_scan, nbr_lines, remaining_lines, count_distances);
 
 		// Show progress
-		printf("buffer %i/%i\n", i_fixed+1, nbr_buffer);
+		// printf("buffer %i/%i\n", i_fixed+1, nbr_buffer);
 	}
 	// Distances within remaining buffer
 	count_distances_within(coords_scan, remaining_lines, count_distances);
 
 	///////////////////////////////////////////
-	
 	
 	// Check if we counted all pairs
 	unsigned long total_count_distances = 0;
@@ -169,9 +168,9 @@ int main(int argc, char *argv[]){
 		total_count_distances += count_distances[ix];
 		printf("%05.2f %lu\n", ((float)ix)/100, count_distances[ix]);
 	}
-	printf("Counted distances: %lu\n", total_count_distances);
-	printf("Total distances: %lu\n", (total_lines-1) * (total_lines) / 2); // Sum of n-1 integers
-	
+	fprintf(stderr, "Counted distances: %lu\n", total_count_distances);
+	fprintf(stderr, "Total distances: %lu\n", (total_lines-1) * (total_lines) / 2); // Sum of n-1 integers
+
 	// Free stuff
 	fclose(fp);
 	free(buffer);
