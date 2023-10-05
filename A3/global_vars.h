@@ -4,6 +4,10 @@
 
 /////////////////////////////////////////////
 // Constants
+// TODO: Implement the better types
+#define TYPE_ATTR char
+#define TYPE_CONV unsigned char
+
 #define PI 3.14159265358979323846
 
 #define X_MIN_RE -2.

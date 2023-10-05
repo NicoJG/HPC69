@@ -42,6 +42,8 @@ double complex newton_iteration_step(double complex x_prev, int degree) {
 
 	*/
 
+	// TODO: "Inserting the Newton iteration step naively, you obtain x - (x^d - 1)/(d*x^(d-1)). How can you simplify it?""
+	
 	switch (degree) {
 		case 1:
 			x_next = 1;
@@ -89,14 +91,24 @@ void newton_iteration(double complex x0, short *root_idx, short *n_its) {
 	for (short i_iter = 0; i_iter < MAX_ITERATIONS; i_iter++) {
 		x = newton_iteration_step(x, order);
 
+		// TODO: "The absolute value of a complex number is the square root of its square norm. How can one avoid taking the square root? In particular, how can you avoid the use of the function cabs?"
+		// TODO: "The square norm of a complex number is the sum of two squares. When computing it for a difference x - x', how can one avoid computing twice the difference of the respective real and imaginary parts?"
+
+		// TODO: "It is possible to achieve complexity log(d) in the degree d. The biggest problem is that naive checking distances to roots is slow if the degree is large. One approach to solve this is to combine a Taylor expansion of x^d - 1 and a binary search"
+
+		// check abort criteria
 		if ((cabs(x) < CONVERGENCE_DIST) || 
-			(creal(x) > MAX_VALUE) || 
-			(cimag(x) > MAX_VALUE)) {
+			(abs(creal(x)) > MAX_VALUE) || 
+			(abs(cimag(x)) > MAX_VALUE)) {
 			// This won't converge anymore
 			break;
 		}
 
+		// check convergence criteria
 		for (short i_root = 0; i_root < order; i_root++) {
+			// TODO: We should save which root is the closest 
+			// then only check this root 
+			// and if the distance is larger than half the distance between roots
 			if (cabs(x - roots[i_root]) < CONVERGENCE_DIST) {
 				// converged
 				*root_idx = i_root;
