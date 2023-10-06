@@ -39,9 +39,8 @@ void write_attractors_row(FILE *file, short *root_idxs_row) {
 
     for (int jx = 0; jx < image_size; jx++) {
         RGBColor color = colors[root_idxs_row[jx] + 1];
-        sprintf(str_row + jx*CHARS_PER_PIXEL, "%03d %03d %03d ", color.r, color.g, color.b);
+        sprintf(str_row + jx*CHARS_PER_PIXEL, "%03d %03d %03d\n", color.r, color.g, color.b);
     }
-    sprintf(str_row + str_length - 1, "\n");
 
     fwrite(str_row, sizeof(char), str_length, file);
 
@@ -55,9 +54,8 @@ void write_convergence_row(FILE *file, short *n_its_row) {
 
     for (int jx = 0; jx < image_size; jx++) {
         int greyscale_value = (((double)n_its_row[jx]) / MAX_ITERATIONS) * MAX_COLOR_VALUE;
-        sprintf(str_row + jx*CHARS_PER_PIXEL, "%03d %03d %03d ", greyscale_value, greyscale_value, greyscale_value);
-    }
-    sprintf(str_row + str_length - 1, "\n");
+        sprintf(str_row + jx*CHARS_PER_PIXEL, "%03d %03d %03d\n", greyscale_value, greyscale_value, greyscale_value);
+    
 
     fwrite(str_row, sizeof(char), str_length, file);
 
