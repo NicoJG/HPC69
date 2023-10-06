@@ -43,7 +43,6 @@ void write_attractors_row(FILE *file, short *root_idxs_row) {
     }
 
     fwrite(str_row, sizeof(char), str_length, file);
-
     free(str_row);
 }
 
@@ -56,8 +55,8 @@ void write_convergence_row(FILE *file, short *n_its_row) {
         int greyscale_value = (((double)n_its_row[jx]) / MAX_ITERATIONS) * MAX_COLOR_VALUE;
         sprintf(str_row + jx*CHARS_PER_PIXEL, "%03d %03d %03d\n", greyscale_value, greyscale_value, greyscale_value);
     
-
+    }
     fwrite(str_row, sizeof(char), str_length, file);
-
     free(str_row);
 }
+
