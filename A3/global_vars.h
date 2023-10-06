@@ -1,5 +1,6 @@
 #pragma once
 
+#include <math.h>
 #include <complex.h>
 
 /////////////////////////////////////////////
@@ -40,3 +41,4 @@ int order = DEFAULT_ORDER;
 TYPE_ATTR **root_idxs;
 TYPE_CONV **n_its;
 double complex *roots;
+double half_root_distance_squared = NAN;

@@ -141,6 +141,14 @@ int main(int argc, char *argv[]){
 		printf("root %d: %f + %fi\n", i_root, creal(roots[i_root]), cimag(roots[i_root]));
 	}
 
+	// Calculate the distance between two roots
+	// It should be the same between all roots 
+	// because it is on the unit circle with equal angles
+	if (order > 1)
+		half_root_distance_squared = csquared(roots[0]-roots[1])/4;
+	else
+		half_root_distance_squared = INFINITY;
+
 	// Open files for writing
 	char filename[50];
 	sprintf(filename, "newton_attractors_x%d.ppm", order);

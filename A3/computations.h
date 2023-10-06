@@ -95,6 +95,9 @@ double csquared(double complex x) {
 static inline
 void newton_iteration(double complex x0, TYPE_ATTR *root_idx, TYPE_CONV *n_its) {
 	double complex x = x0;
+	TYPE_ATTR closest_root = -1;
+	double tmp_dist_squared = NAN;
+
 	for (short i_iter = 0; i_iter < MAX_ITERATIONS; i_iter++) {
 		x = newton_iteration_step(x, order);
 
@@ -107,17 +110,38 @@ void newton_iteration(double complex x0, TYPE_ATTR *root_idx, TYPE_CONV *n_its) 
 			break;
 		}
 
-		// check convergence criteria
+		// check convergence criteria for the closest root
+		if (closest_root != -1) {
+			tmp_dist_squared = csquared(x - roots[closest_root]);
+			// check if it is close enough to the root
+			if (tmp_dist_squared < CONVERGENCE_DIST_SQUARED) {
+				// converged
+				*root_idx = closest_root;
+				*n_its = i_iter+1;
+				return;
+			}
+			// check if it is still the closest root
+			if (tmp_dist_squared < half_root_distance_squared) {
+				continue;
+			} else {
+				closest_root = -1;
+			}
+		}
+
+		// if the closest root is not up to date check all of them
 		for (TYPE_ATTR i_root = 0; i_root < order; i_root++) {
-			// TODO: We should save which root is the closest 
-			// then only check this root 
-			// and check if the distance is larger than half the distance between roots
-			// only then we need to check other roots
-			if (csquared(x - roots[i_root]) < CONVERGENCE_DIST_SQUARED) {
+			tmp_dist_squared = csquared(x - roots[i_root]);
+			// check for convergence of each root
+			if (tmp_dist_squared < CONVERGENCE_DIST_SQUARED) {
 				// converged
 				*root_idx = i_root;
 				*n_its = i_iter+1;
 				return;
+			} 
+			// if it is close enough declare it as the closest root
+			if (tmp_dist_squared < half_root_distance_squared) {
+				closest_root = i_root;
+				break;
 			}
 		}
 	}
