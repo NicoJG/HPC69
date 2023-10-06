@@ -17,7 +17,7 @@ double complex get_x0(short i_row, short i_col) {
 }
 
 static inline
-double complex get_root_by_index(short i_root) {
+double complex get_root_by_index(TYPE_ATTR i_root) {
     assert(0 <= i_root && i_root < order);
     return cexp(I*(2 * PI * i_root / order));
 }
@@ -93,7 +93,7 @@ double csquared(double complex x) {
 }
 
 static inline
-void newton_iteration(double complex x0, short *root_idx, short *n_its) {
+void newton_iteration(double complex x0, TYPE_ATTR *root_idx, TYPE_CONV *n_its) {
 	double complex x = x0;
 	for (short i_iter = 0; i_iter < MAX_ITERATIONS; i_iter++) {
 		x = newton_iteration_step(x, order);
@@ -108,7 +108,7 @@ void newton_iteration(double complex x0, short *root_idx, short *n_its) {
 		}
 
 		// check convergence criteria
-		for (short i_root = 0; i_root < order; i_root++) {
+		for (TYPE_ATTR i_root = 0; i_root < order; i_root++) {
 			// TODO: We should save which root is the closest 
 			// then only check this root 
 			// and check if the distance is larger than half the distance between roots

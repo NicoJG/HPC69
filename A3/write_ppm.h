@@ -43,7 +43,7 @@ void write_ppm_header(FILE* file) {
 }
 
 static inline
-void write_attractors_row(FILE *file, short *root_idxs_row) {
+void write_attractors_row(FILE *file, TYPE_ATTR *root_idxs_row) {
     for (int jx = 0; jx < image_size; jx++) {
         char *color_str = color_strings[root_idxs_row[jx] + 1];
         fwrite(color_str, sizeof(char), CHARS_PER_PIXEL, file);
@@ -52,7 +52,7 @@ void write_attractors_row(FILE *file, short *root_idxs_row) {
 
 
 static inline
-void write_convergence_row(FILE *file, short *n_its_row) {
+void write_convergence_row(FILE *file, TYPE_CONV *n_its_row) {
     for (int jx = 0; jx < image_size; jx++) {
         int greyscale_value = (((double)n_its_row[jx]) / MAX_ITERATIONS) * MAX_COLOR_VALUE;
         char *greyscale_str = greyscale_strings[greyscale_value];

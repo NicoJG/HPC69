@@ -42,8 +42,8 @@ int compute_thread(void *args) {
 	// Iterate through the rows that are assigned to this thread
 	for (int ix = ix_start; ix < image_size; ix += ix_step) {
 		// Allocate memory for row ix
-		short *root_idxs_row = (short *) malloc(sizeof(short) * image_size);
-		short *n_its_row = (short *) malloc(sizeof(short) * image_size);
+		TYPE_ATTR *root_idxs_row = (TYPE_ATTR *) malloc(sizeof(TYPE_ATTR) * image_size);
+		TYPE_CONV *n_its_row = (TYPE_CONV *) malloc(sizeof(TYPE_CONV) * image_size);
 
 		// Do the Newton iteration on each entry of row ix
 		for (int jx = 0; jx < image_size; ++jx) {
@@ -131,8 +131,8 @@ int main(int argc, char *argv[]){
 	// Allocate double pointers to the rows of the two images but allocate
 	// the row entries in the threads as we go
 	// Global variables:
-	root_idxs = (short **) malloc(sizeof(short *) * image_size);
-	n_its = (short **) malloc(sizeof(short *) * image_size);
+	root_idxs = (TYPE_ATTR **) malloc(sizeof(TYPE_ATTR *) * image_size);
+	n_its = (TYPE_CONV **) malloc(sizeof(TYPE_CONV *) * image_size);
 
 	// Prepare a list of the roots
 	roots = (double complex *) malloc(sizeof(double complex) * order);

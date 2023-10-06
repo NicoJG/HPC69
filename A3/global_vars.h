@@ -4,7 +4,6 @@
 
 /////////////////////////////////////////////
 // Constants
-// TODO: Implement the better types
 #define TYPE_ATTR char
 #define TYPE_CONV unsigned char
 
@@ -38,6 +37,6 @@ int n_threads = DEFAULT_THREADS;
 int image_size = DEFAULT_IMAGE_SIZE;
 int order = DEFAULT_ORDER;
 
-short **root_idxs;
-short **n_its;
+TYPE_ATTR **root_idxs;
+TYPE_CONV **n_its;
 double complex *roots;
