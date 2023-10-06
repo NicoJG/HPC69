@@ -12,21 +12,13 @@
 // Those variables can be accessed everywhere
 // but make sure not to write to those vars at the same time (in different threads)
 
-
-// I don't know why we need this padded int /Nico
-// Neither do I! It's used for the status variable but I'm unsure why we need pad /Isak
-typedef struct {
-	int val;
-	char pad[60]; 
-} int_padded;
-
 typedef struct {
 	int ix_start;
 	int ix_step;
 	int i_thrd;
 	mtx_t *mtx;
 	cnd_t *cnd;
-	int_padded *status;
+	int *status;
 } thrd_info_compute_t;
 
 typedef struct {
@@ -34,7 +26,7 @@ typedef struct {
 	FILE *file_convergence;
 	mtx_t *mtx;
 	cnd_t *cnd;
-	int_padded *status;
+	int *status;
 } thrd_info_write_t;
 
 int compute_thread(void *args) {
@@ -45,7 +37,7 @@ int compute_thread(void *args) {
 	const int i_thrd = thrd_info->i_thrd;
 	mtx_t *mtx = thrd_info->mtx;
 	cnd_t *cnd = thrd_info->cnd;
-	int_padded *status = thrd_info->status;
+	int *status = thrd_info->status;
 
 	// Iterate through the rows that are assigned to this thread
 	for (int ix = ix_start; ix < image_size; ix += ix_step) {
@@ -67,7 +59,7 @@ int compute_thread(void *args) {
 		root_idxs[ix] = root_idxs_row;
 		n_its[ix] = n_its_row;
 		// update which row this thread is working on next
-		status[i_thrd].val = ix + ix_step; 
+		status[i_thrd] = ix + ix_step; 
 		mtx_unlock(mtx);
 		cnd_signal(cnd);
 	}
@@ -82,7 +74,7 @@ int write_thread(void *args) {
 	FILE *file_convergence = thrd_info->file_convergence;
 	mtx_t *mtx = thrd_info->mtx;
 	cnd_t *cnd = thrd_info->cnd;
-	int_padded *status = thrd_info->status;
+	int *status = thrd_info->status;
 
 	// No incrementation in this loop
 	for (int ix = 0, ibnd; ix < image_size; ) {
@@ -95,8 +87,8 @@ int write_thread(void *args) {
 			// before writing them to the file and not just the random values from initialization
 			ibnd = image_size;
 			for (int i_thrd = 0; i_thrd < n_threads; ++i_thrd) {
-				if (ibnd > status[i_thrd].val) {
-					ibnd = status[i_thrd].val;
+				if (ibnd > status[i_thrd]) {
+					ibnd = status[i_thrd];
 				}
 			}
 
@@ -195,7 +187,7 @@ int main(int argc, char *argv[]){
 	cnd_t cnd;
 	cnd_init(&cnd);
 
-	int_padded status[n_threads];
+	int status[n_threads];
 
 	// Start the computation threads
 	for (int i_thrd = 0; i_thrd < n_threads; ++i_thrd) {
@@ -205,7 +197,7 @@ int main(int argc, char *argv[]){
 		thrds_info_compute[i_thrd].mtx = &mtx;
 		thrds_info_compute[i_thrd].cnd = &cnd;
 		thrds_info_compute[i_thrd].status = status;
-		status[i_thrd].val = 0;
+		status[i_thrd] = 0;
 
 		int r = thrd_create(
 					&thrds_compute[i_thrd], 
@@ -259,14 +251,3 @@ int main(int argc, char *argv[]){
 
 	return 0;
 } 
-
-
-
-/*
-   I think a good way of designing the program is to let a couple of threads work together on one line at a time.
-   By doing this we will finish line-by-line and be able to write the lines as we go along with the computations, 
-   using a different thread. I think this is what's being done in the video on multi-stage processing.
-
-// Isak
-
-*/
