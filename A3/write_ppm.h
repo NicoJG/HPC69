@@ -43,21 +43,35 @@ void write_ppm_header(FILE* file) {
 }
 
 static inline
+void copy_str(char* from_str, char* to_str, int length) {
+    for (int i_char=0; i_char < length; i_char++) {
+        to_str[i_char] = from_str[i_char]; 
+    }
+}
+
+static inline
 void write_attractors_row(FILE *file, TYPE_ATTR *root_idxs_row) {
+    int str_length = CHARS_PER_PIXEL * image_size;
+    char* str_line = (char*) malloc(sizeof(char) * str_length);
     for (int jx = 0; jx < image_size; jx++) {
         char *color_str = color_strings[root_idxs_row[jx] + 1];
-        fwrite(color_str, sizeof(char), CHARS_PER_PIXEL, file);
+        copy_str(color_str, str_line + jx*CHARS_PER_PIXEL, CHARS_PER_PIXEL);
     }
+    fwrite(str_line, sizeof(char), image_size*CHARS_PER_PIXEL, file);
+    free(str_line);
 }
 
 
 static inline
 void write_convergence_row(FILE *file, TYPE_CONV *n_its_row) {
+    int str_length = CHARS_PER_PIXEL * image_size;
+    char* str_line = (char*) malloc(sizeof(char) * str_length);
     for (int jx = 0; jx < image_size; jx++) {
         int greyscale_value = (((double)n_its_row[jx]) / MAX_ITERATIONS) * MAX_COLOR_VALUE;
         char *greyscale_str = greyscale_strings[greyscale_value];
-        fwrite(greyscale_str, sizeof(char), CHARS_PER_PIXEL, file);
-    
+        copy_str(greyscale_str, str_line + jx*CHARS_PER_PIXEL, CHARS_PER_PIXEL);
     }
+    fwrite(str_line, sizeof(char), image_size*CHARS_PER_PIXEL, file);
+    free(str_line);
 }
 
