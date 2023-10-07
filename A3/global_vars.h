@@ -7,6 +7,8 @@
 // Constants
 #define TYPE_ATTR char
 #define TYPE_CONV unsigned char
+#define TYPE_COORDS double
+#define TYPE_COMPLEX TYPE_COORDS complex
 
 #define PI 3.14159265358979323846
 
@@ -40,5 +42,5 @@ int order = DEFAULT_ORDER;
 
 TYPE_ATTR **root_idxs;
 TYPE_CONV **n_its;
-double complex *roots;
-double half_root_distance_squared = NAN;
+TYPE_COMPLEX *roots;
+TYPE_COORDS half_root_distance_squared = NAN;

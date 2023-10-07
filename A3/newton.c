@@ -48,7 +48,7 @@ int compute_thread(void *args) {
 		// Do the Newton iteration on each entry of row ix
 		for (int jx = 0; jx < image_size; ++jx) {
 			// Get the position that (ix,jx) corresponds to
-			double complex x0 = get_x0(ix, jx); 
+			TYPE_COMPLEX x0 = get_x0(ix, jx); 
 
 			// perform newton iteration and save the result in the jx item
 			newton_iteration(x0, root_idxs_row + jx, n_its_row + jx);
@@ -128,14 +128,14 @@ int main(int argc, char *argv[]){
 
 	// LAYOUT:
     // setup arrays -> attractors, convergences, roots
-	// Allocate double pointers to the rows of the two images but allocate
+	// Allocate TYPE_COORDS pointers to the rows of the two images but allocate
 	// the row entries in the threads as we go
 	// Global variables:
 	root_idxs = (TYPE_ATTR **) malloc(sizeof(TYPE_ATTR *) * image_size);
 	n_its = (TYPE_CONV **) malloc(sizeof(TYPE_CONV *) * image_size);
 
 	// Prepare a list of the roots
-	roots = (double complex *) malloc(sizeof(double complex) * order);
+	roots = (TYPE_COMPLEX *) malloc(sizeof(TYPE_COMPLEX) * order);
 	for (int i_root = 0; i_root < order; i_root++) {
 		roots[i_root] = get_root_by_index(i_root);
 		printf("root %d: %f + %fi\n", i_root, creal(roots[i_root]), cimag(roots[i_root]));

@@ -9,21 +9,21 @@
 #include "global_vars.h"
 
 static inline
-double complex get_x0(short i_row, short i_col) {
-    double complex x0 = 0;
+TYPE_COMPLEX get_x0(short i_row, short i_col) {
+    TYPE_COMPLEX x0 = 0;
     x0 +=    X_MIN_RE + (X_MAX_RE-X_MIN_RE) * i_row / image_size;
     x0 += I*(X_MIN_IM + (X_MAX_IM-X_MIN_IM) * i_col / image_size);
     return x0;
 }
 
 static inline
-double complex get_root_by_index(TYPE_ATTR i_root) {
+TYPE_COMPLEX get_root_by_index(TYPE_ATTR i_root) {
     assert(0 <= i_root && i_root < order);
     return cexp(I*(2 * PI * i_root / order));
 }
 
 static inline
-double complex newton_iteration_step(double complex x_prev, int degree) {
+TYPE_COMPLEX newton_iteration_step(TYPE_COMPLEX x_prev, int degree) {
 
 	// Analytical expression is 	
 	/*
@@ -31,8 +31,8 @@ double complex newton_iteration_step(double complex x_prev, int degree) {
 	x_next = -----------------------
 	               d * x^(d-1)
 	*/
-	double complex x_next;
-	//double complex x_d = 1;
+	TYPE_COMPLEX x_next;
+	//TYPE_COMPLEX x_d = 1;
 	
 	/*
 	for (size_t ix = 0; ix < degree; ix++){
@@ -88,15 +88,15 @@ double complex newton_iteration_step(double complex x_prev, int degree) {
 // Hint: "The absolute value of a complex number is the square root of its square norm. How can one avoid taking the square root? In particular, how can you avoid the use of the function cabs?"
 // Hint2: "The square norm of a complex number is the sum of two squares. When computing it for a difference x - x', how can one avoid computing twice the difference of the respective real and imaginary parts?"
 static inline
-double csquared(double complex x) {
+TYPE_COORDS csquared(TYPE_COMPLEX x) {
 	return creal(x)*creal(x) + cimag(x)*cimag(x);
 }
 
 static inline
-void newton_iteration(double complex x0, TYPE_ATTR *root_idx, TYPE_CONV *n_its) {
-	double complex x = x0;
+void newton_iteration(TYPE_COMPLEX x0, TYPE_ATTR *root_idx, TYPE_CONV *n_its) {
+	TYPE_COMPLEX x = x0;
 	TYPE_ATTR closest_root = -1;
-	double tmp_dist_squared = NAN;
+	TYPE_COORDS tmp_dist_squared = NAN;
 
 	for (short i_iter = 0; i_iter < MAX_ITERATIONS; i_iter++) {
 		x = newton_iteration_step(x, order);
@@ -104,8 +104,8 @@ void newton_iteration(double complex x0, TYPE_ATTR *root_idx, TYPE_CONV *n_its) 
 		// check abort criteria
 		// cabs(x) = sqrt(sqare(x)) but sqrt is slow
 		if ((csquared(x) < MAX_DIST_TO_ORIGIN_SQUARED) || 
-			(abs(creal(x)) > MAX_VALUE) || 
-			(abs(cimag(x)) > MAX_VALUE)) {
+			(fabs(creal(x)) > MAX_VALUE) || 
+			(fabs(cimag(x)) > MAX_VALUE)) {
 			// This won't converge anymore
 			break;
 		}
