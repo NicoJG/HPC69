@@ -43,39 +43,37 @@ TYPE_COMPLEX newton_iteration_step(TYPE_COMPLEX x_prev, int degree) {
 	*/
 
 	// TODO: "Inserting the Newton iteration step naively, you obtain x - (x^d - 1)/(d*x^(d-1)). How can you simplify it?""
-	
+
+	// previously we had: ( (d - 1) * x^d + 1) / (d * x^d / x)
+	// it is the same as: ( 1/x^(d-1) + (d-1) * x )/d
+
 	switch (degree) {
 		case 1:
 			x_next = 1;
 			break;
 		case 2:
-			x_next = (x_prev * x_prev + 1) / (2 * x_prev);
+			x_next = (1 / x_prev + x_prev) / 2;
 			break;
 		case 3:
-			x_next = (2 * x_prev * x_prev * x_prev + 1) / (3 * x_prev * x_prev);
+			x_next = (1 / (x_prev * x_prev) + 2 * x_prev) / 3;
 			break;
 		case 4:
-			x_next = (3 * x_prev * x_prev * x_prev * x_prev + 1) / (4 * x_prev * x_prev * x_prev);
+			x_next = (1 / (x_prev * x_prev * x_prev) + 3 * x_prev) / 4;
 			break;
 		case 5:
-			x_next = (4 * x_prev * x_prev * x_prev * x_prev * x_prev + 1) / 
-		    		 (5 * x_prev * x_prev * x_prev * x_prev);
+			x_next = (1 / (x_prev * x_prev * x_prev * x_prev) + 4 * x_prev) / 5;
 			break;
 		case 6:
-			x_next = (5 * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev + 1) / 
-				 (6 * x_prev * x_prev * x_prev * x_prev * x_prev);
+			x_next = (1 / (x_prev * x_prev * x_prev * x_prev * x_prev) + 5 * x_prev) / 6;
 			break;
 		case 7:
-			x_next = (6 * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev + 1) / 
-				 (7 * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev);
+			x_next = (1 / (x_prev * x_prev * x_prev * x_prev * x_prev * x_prev) + 6 * x_prev) / 7;
 			break;
 		case 8:
-			x_next = (7 * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev + 1) / 
-				 (8 * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev);
+			x_next = (1 / (x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev) + 7 * x_prev) / 8;
 			break;
 		case 9:
-			x_next = (8 * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev + 1) / 
-				 (9 * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev);
+			x_next = (1 / (x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev * x_prev) + 8 * x_prev) / 9;
 			break;
 		default:
 			fprintf(stderr, "unexpected degree\n");
