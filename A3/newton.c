@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <threads.h>
+#include <time.h>
 
 #include "global_vars.h"
 #include "cmd_args.h"
@@ -11,6 +12,15 @@
 // This way we don't need to send some vars to the thread functions
 // Those variables can be accessed everywhere
 // but make sure not to write to those vars at the same time (in different threads)
+
+// for conditional wait with a timeout
+#define TIMEOUT_SECONDS 10
+struct timespec get_absolute_timeout(int seconds) {
+    struct timespec ts;
+  	timespec_get(&ts, TIME_UTC);
+    ts.tv_sec += seconds;
+    return ts;
+}
 
 typedef struct {
 	int ix_start;
@@ -54,6 +64,9 @@ int compute_thread(void *args) {
 			newton_iteration(x0, root_idxs_row + jx, n_its_row + jx);
 		}
 
+		// for testing if the cnd_timedwait works
+    	// thrd_sleep(&(struct timespec){.tv_sec=TIMEOUT_SECONDS*3, .tv_nsec=0}, NULL);
+
 		// Lock so we don't read and write to matrices at the same time
 		mtx_lock(mtx);
 		root_idxs[ix] = root_idxs_row;
@@ -93,7 +106,10 @@ int write_thread(void *args) {
 			}
 
 			if (ibnd <= ix) {
-				cnd_wait(cnd, mtx);
+				struct timespec ts = get_absolute_timeout(TIMEOUT_SECONDS);
+				int result = cnd_timedwait(cnd, mtx, &ts);
+				if (result == thrd_timedout)
+					fprintf(stderr, "The writing thread timed out while waiting for a signal.\n");
 
 			} else {
 				mtx_unlock(mtx);
