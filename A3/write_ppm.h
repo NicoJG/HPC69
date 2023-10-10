@@ -36,7 +36,7 @@ void prepare_greyscale_strings() {
 
 static inline
 void write_ppm_header(FILE* file) {
-    prepare_greyscale_strings(); // maybe not the best place to put it
+    prepare_greyscale_strings(); 
     fprintf(file, "P3\n");
     fprintf(file, "%d %d\n", image_size, image_size);
     fprintf(file, "%d\n", MAX_COLOR_VALUE);

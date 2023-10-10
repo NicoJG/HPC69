@@ -25,27 +25,21 @@ TYPE_COMPLEX get_root_by_index(TYPE_ATTR i_root) {
 static inline
 TYPE_COMPLEX newton_iteration_step(TYPE_COMPLEX x_prev, int degree) {
 
-	// Analytical expression is 	
-	/*
+	/* "Inserting the Newton iteration step naively, you obtain x - (x^d - 1)/(d*x^(d-1)). How can you simplify it?""
+
+	Analytical expression is 	
+
 	           ((d - 1) * x^d + 1) 
 	x_next = -----------------------
 	               d * x^(d-1)
+
+	Can be simplified to 
+	               1 
+	x_next = [ -------- + (d-1) * x ] / d
+	            x^(d-1)
 	*/
+
 	TYPE_COMPLEX x_next;
-	//TYPE_COMPLEX x_d = 1;
-	
-	/*
-	for (size_t ix = 0; ix < degree; ix++){
-		x_d *= x_prev;
-	}
-	x_next = ( (degree - 1) * x_d + 1) / (degree * x_d / x_prev);
-
-	*/
-
-	// TODO: "Inserting the Newton iteration step naively, you obtain x - (x^d - 1)/(d*x^(d-1)). How can you simplify it?""
-
-	// previously we had: ( (d - 1) * x^d + 1) / (d * x^d / x)
-	// it is the same as: ( 1/x^(d-1) + (d-1) * x )/d
 
 	switch (degree) {
 		case 1:
@@ -99,7 +93,7 @@ void newton_iteration(TYPE_COMPLEX x0, TYPE_ATTR *root_idx, TYPE_CONV *n_its) {
 	for (short i_iter = 0; i_iter < MAX_ITERATIONS; i_iter++) {
 		x = newton_iteration_step(x, order);
 
-		// check abort criteria
+		// Check abort criteria
 		// cabs(x) = sqrt(sqare(x)) but sqrt is slow
 		if ((csquared(x) < MAX_DIST_TO_ORIGIN_SQUARED) || 
 			(fabs(creal(x)) > MAX_VALUE) || 
@@ -108,17 +102,17 @@ void newton_iteration(TYPE_COMPLEX x0, TYPE_ATTR *root_idx, TYPE_CONV *n_its) {
 			break;
 		}
 
-		// check convergence criteria for the closest root
+		// Check convergence criteria for the closest root
 		if (closest_root != -1) {
 			tmp_dist_squared = csquared(x - roots[closest_root]);
-			// check if it is close enough to the root
+			// Check if it is close enough to the root
 			if (tmp_dist_squared < CONVERGENCE_DIST_SQUARED) {
-				// converged
+				// Converged
 				*root_idx = closest_root;
 				*n_its = i_iter+1;
 				return;
 			}
-			// check if it is still the closest root
+			// Check if it is still the closest root
 			if (tmp_dist_squared < half_root_distance_squared) {
 				continue;
 			} else {
@@ -126,17 +120,17 @@ void newton_iteration(TYPE_COMPLEX x0, TYPE_ATTR *root_idx, TYPE_CONV *n_its) {
 			}
 		}
 
-		// if the closest root is not up to date check all of them
+		// If the closest root is not up to date check all of them
 		for (TYPE_ATTR i_root = 0; i_root < order; i_root++) {
 			tmp_dist_squared = csquared(x - roots[i_root]);
-			// check for convergence of each root
+			// Check for convergence of each root
 			if (tmp_dist_squared < CONVERGENCE_DIST_SQUARED) {
-				// converged
+				// Converged
 				*root_idx = i_root;
 				*n_its = i_iter+1;
 				return;
 			} 
-			// if it is close enough declare it as the closest root
+			// If it is close enough declare it as the closest root
 			if (tmp_dist_squared < half_root_distance_squared) {
 				closest_root = i_root;
 				break;
@@ -144,7 +138,7 @@ void newton_iteration(TYPE_COMPLEX x0, TYPE_ATTR *root_idx, TYPE_CONV *n_its) {
 		}
 	}
 
-	// didn't converge
+	// Didn't converge
 	*root_idx = -1;
 	*n_its = 0;
 }

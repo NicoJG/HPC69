@@ -13,7 +13,7 @@
 // Those variables can be accessed everywhere
 // but make sure not to write to those vars at the same time (in different threads)
 
-// for conditional wait with a timeout
+// For conditional wait with a timeout
 #define TIMEOUT_SECONDS 10
 struct timespec get_absolute_timeout(int seconds) {
     struct timespec ts;
@@ -60,12 +60,9 @@ int compute_thread(void *args) {
 			// Get the position that (ix,jx) corresponds to
 			TYPE_COMPLEX x0 = get_x0(ix, jx); 
 
-			// perform newton iteration and save the result in the jx item
+			// Perform newton iteration and save the result in the jx item
 			newton_iteration(x0, root_idxs_row + jx, n_its_row + jx);
 		}
-
-		// for testing if the cnd_timedwait works
-    	// thrd_sleep(&(struct timespec){.tv_sec=TIMEOUT_SECONDS*3, .tv_nsec=0}, NULL);
 
 		// Lock so we don't read and write to matrices at the same time
 		mtx_lock(mtx);
@@ -95,9 +92,7 @@ int write_thread(void *args) {
 		// Check if new row is available
 		for (mtx_lock(mtx); ; ) {
 			
-			// Get the minimum of the status values (I think this ensures rows are not written out of order)
-			// I agree, kinda, I think it's to make sure all the rows between ix and ibnd are actually done
-			// before writing them to the file and not just the random values from initialization
+			// Get the minimum of the status values to make sure all the rows between ix and ibnd are actually done before writing them to the file and not just the random values from initialization.
 			ibnd = image_size;
 			for (int i_thrd = 0; i_thrd < n_threads; ++i_thrd) {
 				if (ibnd > status[i_thrd]) {
@@ -117,8 +112,7 @@ int write_thread(void *args) {
 			}
 		}
 
-		// SHOULD WRITE THE IMAGES HERE
-		// iterate through the rows
+		// Write over the different rows
 		for ( ; ix < ibnd; ++ix) {
 			write_attractors_row(file_attractors, root_idxs[ix]);
 			write_convergence_row(file_convergence, n_its[ix]);
@@ -183,11 +177,11 @@ int main(int argc, char *argv[]){
 		return -1;
 	}
 
-	// write the PPM headers
+	// Write the PPM headers
 	write_ppm_header(file_attractors);
 	write_ppm_header(file_convergence);
 
-    // iterate over pixels
+    // Iterate over pixels
     // -> get position (x0)
     // -> newton iteration
     // --> check if x is converged (x - root[i]) <= CONV_DIST
@@ -232,10 +226,7 @@ int main(int argc, char *argv[]){
 			fprintf(stderr, "failed to create thread\n");
 			exit(1);
     	}
-
-		// Martin adds "thrd_detach" here but I'm not entirely sure what it does!
-		// Isak
-
+		// Detach
 		thrd_detach(thrds_compute[i_thrd]);
 	}
 
@@ -258,13 +249,13 @@ int main(int argc, char *argv[]){
 		}
   	}
 
-	// wait until the writing thread has finished
+	// Wait until the writing thread has finished
 	{
 		int r;
 		thrd_join(thrd_write, &r);
 	}
 
-	// free variables
+	// Free variables
 	free(root_idxs);
 	free(n_its);
 	free(roots);
