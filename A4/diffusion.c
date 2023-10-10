@@ -5,6 +5,7 @@
 #include <CL/cl.h>
 
 #include "cmd_args.h"
+#include "read_file.h"
 
 const char *opencl_program_src = \
 	" "\
@@ -101,6 +102,17 @@ main(
     clReleaseCommandQueue(command_queue);
     clReleaseContext(context);
     
+    // read header 
+    FILE *fp;
+    fp = fopen("test_data/init_10000_1000", "r");
+
+    int width, height;
+    read_header(fp, &width, &height);
+
+    printf("Width: %d\n", width);
+    printf("Height: %d\n", height);
+
+    fclose(fp);
     return 0;
     
 }
