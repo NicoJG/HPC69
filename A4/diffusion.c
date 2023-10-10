@@ -117,63 +117,80 @@ int main(int argc, char *argv[]){
 		fprintf(stderr, "cannot create kernel\n");
 		return 1;
 	}
+	
+	// REMOVE WHEN NOT USING DUMMY MATRIX
+	width = 3;
+	height = 3;
 
-	const int width_a = 3;
-	const int height_a = 3;
-
-	cl_mem input_buffer_a, output_buffer_n;
-	input_buffer_a = clCreateBuffer(context, CL_MEM_READ_ONLY,
-			width_a*height_a * sizeof(float), NULL, &error);
+	cl_mem input_buffer, output_buffer;
+	input_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY,
+			width * height * sizeof(float), NULL, &error);
 	if ( error != CL_SUCCESS ) {
-		fprintf(stderr, "cannot create buffer a\n");
+		fprintf(stderr, "cannot create buffer matrix_prev\n");
 		return 1;
 	}
-	output_buffer_n = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
-			width_a*height_a * sizeof(float), NULL, &error);
+	output_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
+			width * height * sizeof(float), NULL, &error);
 	if ( error != CL_SUCCESS ) {
 		fprintf(stderr, "cannot create buffer c\n");
 		return 1;
 	}
 
 	// Dummy 3 * 3 matrix with fixed value in the center and zero otherwise.
-	float *a = malloc(width_a * height_a * sizeof(float));
-	memset(a, 0, width_a * height_a * sizeof(float));
-	a[4] = 1000000;
+	float *matrix_prev = calloc(width * height, sizeof(float));
+	if (!matrix_prev) {
+        	fprintf(stderr, "Error allocating memory for matrix_prev.\n");
+		return 1;
+	}
 
-	const size_t global_sz[] = {width_a, height_a};
+	matrix_prev[4] = 1000000;
+
+	const size_t global_sz[] = {width, height};
 
 	// Compute heat diffusion
 	
-	float *n = malloc(width_a * height_a * sizeof(float));
-
-	for (size_t ix = 0; ix < n_its; ix++){
+	float *matrix_next = malloc(width * height * sizeof(float));
+	if (!matrix_next) {
+		fprintf(stderr, "Error allocating memory for matrix_next.\n");
+        	free(matrix_prev);
+        	return 1;
+	}
+	
+	// Loop over the desired amount of iterations. --> Check if everything that is inside make sense to be inside or if it could be outside of the loop.
+	
+	for (size_t iteration = 0; iteration < n_its; iteration++){
 		if ( clEnqueueWriteBuffer(command_queue,
-					input_buffer_a, CL_TRUE, 0, width_a * height_a * sizeof(float), a, 0, NULL, NULL)
+					input_buffer, CL_TRUE, 0, width * height * sizeof(float), matrix_prev, 0, NULL, NULL)
 				!= CL_SUCCESS ) {
 			fprintf(stderr, "cannot enqueue write of buffer a\n");
 			return 1;
 		}
-		clSetKernelArg(kernel, 0, sizeof(cl_mem), &input_buffer_a);
+		clSetKernelArg(kernel, 0, sizeof(cl_mem), &input_buffer);
 		clSetKernelArg(kernel, 1, sizeof(float), &diff_const);
-		clSetKernelArg(kernel, 2, sizeof(cl_mem), &output_buffer_n);
-		clSetKernelArg(kernel, 3, sizeof(int), &width_a);
-	
+		clSetKernelArg(kernel, 2, sizeof(cl_mem), &output_buffer);
+		clSetKernelArg(kernel, 3, sizeof(int), &width);
+		
+		// "for loop" in the kernel
 		if ( clEnqueueNDRangeKernel(command_queue, kernel,
 					2, NULL, (const size_t *) global_sz, NULL, 0, NULL, NULL)
-				!= CL_SUCCESS ) {
+				!= CL_SUCCESS ) { // Should make sure that the edges are actually 0.
 			fprintf(stderr, "cannot enqueue kernel\n");
 			return 1;
 		}
 
 		if ( clEnqueueReadBuffer(command_queue,
-					output_buffer_n, CL_TRUE, 0, width_a*height_a * sizeof(float), n, 0, NULL, NULL)
+					output_buffer, CL_TRUE, 0, width * height * sizeof(float), matrix_next, 0, NULL, NULL)
 				!= CL_SUCCESS ) {
 			fprintf(stderr, "cannot enqueue read of buffer c\n");
 			return 1;
 		}
 
-		memcpy(a, n, width_a * height_a * sizeof(float));
+		// Swap pointers; We can't just do matrix_prev = matrix_next because we would loose the reference to the original matrix_prev memory and loose the block.
+		float *temp = matrix_prev;
+        	matrix_prev = matrix_next;
+        	matrix_next = temp;
 	}
+	
 
 	if ( clFinish(command_queue) != CL_SUCCESS ) {
 		fprintf(stderr, "cannot finish queue\n");
@@ -181,18 +198,21 @@ int main(int argc, char *argv[]){
 	}
 
 
-	for (size_t jx = 0; jx < height_a; ++jx) {
-		for (size_t ix=0; ix < width_a; ++ix)
-			printf(" %5.f ", n[jx * width_a + ix]);
+	for (size_t jx = 0; jx < height; ++jx) {
+		for (size_t ix=0; ix < width; ++ix)
+			printf(" %5.f ", matrix_prev[jx * width + ix]); // The last iteration is stored in memory_prev because of the pointer swap.
 		printf("\n");
 	}
 
+	// TODO 
+	// - Compute average temperature and absolute difference with average
+	// - Compute diffusion from data file instead of dummy matrix
 
-	free(a);
-	free(n);
+	free(matrix_prev);
+	free(matrix_next);
 
-	clReleaseMemObject(input_buffer_a);
-	clReleaseMemObject(output_buffer_n);
+	clReleaseMemObject(input_buffer);
+	clReleaseMemObject(output_buffer);
 
 	clReleaseProgram(program);
 	clReleaseKernel(kernel);
