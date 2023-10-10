@@ -2,7 +2,7 @@ __kernel
 void
 heat_diff(
 	__global const float *a,
-	const double c,
+	const float c,
 	__global float *n,
 	int width_a
 	)
