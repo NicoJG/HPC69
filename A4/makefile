@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O2 -march=native -g -lm
+CFLAGS = -O2 -march=native -g -lOpenCL
 
 HEADERS = global_vars.h cmd_args.h
 
