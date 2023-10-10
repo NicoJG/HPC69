@@ -11,8 +11,8 @@
 static inline
 TYPE_COMPLEX get_x0(short i_row, short i_col) {
     TYPE_COMPLEX x0 = 0;
-    x0 +=    X_MIN_RE + (X_MAX_RE-X_MIN_RE) * i_row / image_size;
-    x0 += I*(X_MIN_IM + (X_MAX_IM-X_MIN_IM) * i_col / image_size);
+    x0 +=    X_MIN_RE + (X_MAX_RE-X_MIN_RE) * i_col / image_size; // Real values are on the x-axis
+    x0 += I*(X_MAX_IM - (X_MAX_IM-X_MIN_IM) * i_row / image_size); // Imaginary values are on the y-axis
     return x0;
 }
 
@@ -146,5 +146,5 @@ void newton_iteration(TYPE_COMPLEX x0, TYPE_ATTR *root_idx, TYPE_CONV *n_its) {
 
 	// didn't converge
 	*root_idx = -1;
-	*n_its = MAX_ITERATIONS;
+	*n_its = 0;
 }
