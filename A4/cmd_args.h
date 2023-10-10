@@ -8,28 +8,30 @@
 
 static inline
 void parse_cmd_args(int argc, char *argv[], short *n_its, float *diff_const) {
-    int opt, val;
+    int opt, int_val;
+	float float_val;
 
 	if (argc > 1) {
 		while((opt = getopt(argc, argv, "n:d:")) != -1) {
 			switch(opt) {
 				case 'n':
-					val = atoi(optarg);
-					if (val == 0) {
+					int_val = atoi(optarg);
+					if (int_val == 0) {
 						printf("'%s' is not a valid integer... Using default number of iterations, %d.\n", optarg, DEFAULT_ITS);
 						*n_its = DEFAULT_ITS;
 						break;
 					}
-					*n_its = val;
+					*n_its = int_val;
 					break;
-				case 'l':
-					val = atof(optarg);
-					if (val == 0) {
-						printf("Invalid argument for option -l. '%s' is not a valid float ... Using default diffusion constant, %d.\n", optarg, DEFAULT_DIFFUSION_CONSTANT);
+				case 'd':
+					float_val = atof(optarg);
+					
+					if (float_val == 0.0) {
+						printf("Invalid argument for option -d. '%s' is not a valid diffusion constant ... Using default diffusion constant, %f.\n", optarg, DEFAULT_DIFFUSION_CONSTANT);
 						*diff_const = DEFAULT_DIFFUSION_CONSTANT;
 						break;
 					}
-					*diff_const = val;
+					*diff_const = float_val;
 					break;
 
 				case '?':
