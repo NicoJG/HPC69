@@ -4,6 +4,9 @@
 #define CL_TARGET_OPENCL_VERSION 300
 #include <CL/cl.h>
 
+#include "cmd_args.h"
+#include "read_file.h"
+
 int
 main()
 {
@@ -179,5 +182,17 @@ main()
   clReleaseCommandQueue(command_queue);
   clReleaseContext(context);
 
-  return 0;
+    // read header 
+    FILE *fp;
+    fp = fopen("test_data/init_10000_1000", "r");
+
+    int width, height;
+    read_header(fp, &width, &height);
+
+    printf("Width: %d\n", width);
+    printf("Height: %d\n", height);
+
+    fclose(fp);
+    return 0;
+
 }

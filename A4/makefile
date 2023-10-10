@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -O2 -march=native -g -lOpenCL
 
-HEADERS = global_vars.h cmd_args.h
+HEADERS = global_vars.h cmd_args.h read_file.h
 
 .PHONY : all clean run
 
