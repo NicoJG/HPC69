@@ -155,6 +155,11 @@ int main(int argc, char *argv[]){
         	free(matrix_prev);
         	return 1;
 	}
+
+	clSetKernelArg(kernel, 0, sizeof(cl_mem), &input_buffer);
+	clSetKernelArg(kernel, 1, sizeof(float), &diff_const);
+	clSetKernelArg(kernel, 2, sizeof(cl_mem), &output_buffer);
+	clSetKernelArg(kernel, 3, sizeof(int), &width);
 	
 	// Loop over the desired amount of iterations. --> Check if everything that is inside make sense to be inside or if it could be outside of the loop.
 	
@@ -165,10 +170,6 @@ int main(int argc, char *argv[]){
 			fprintf(stderr, "cannot enqueue write of buffer a\n");
 			return 1;
 		}
-		clSetKernelArg(kernel, 0, sizeof(cl_mem), &input_buffer);
-		clSetKernelArg(kernel, 1, sizeof(float), &diff_const);
-		clSetKernelArg(kernel, 2, sizeof(cl_mem), &output_buffer);
-		clSetKernelArg(kernel, 3, sizeof(int), &width);
 		
 		// "for loop" in the kernel
 		if ( clEnqueueNDRangeKernel(command_queue, kernel,
