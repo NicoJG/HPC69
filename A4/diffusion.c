@@ -112,9 +112,15 @@ int main(int argc, char *argv[]){
 		return 1;
 	}
 
-	cl_kernel kernel = clCreateKernel(program, "heat_diff", &error);
+	cl_kernel kernel_diffusion = clCreateKernel(program, "heat_diff", &error);
 	if ( error != CL_SUCCESS ) {
-		fprintf(stderr, "cannot create kernel\n");
+		fprintf(stderr, "cannot create kernel_diffusion\n");
+		return 1;
+	}
+
+	cl_kernel kernel_average = clCreateKernel(program, "compute_average", &error);
+	if ( error != CL_SUCCESS ) {
+		fprintf(stderr, "cannot create kernel_average\n");
 		return 1;
 	}
 	
@@ -126,13 +132,13 @@ int main(int argc, char *argv[]){
 	input_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY,
 			width * height * sizeof(float), NULL, &error);
 	if ( error != CL_SUCCESS ) {
-		fprintf(stderr, "cannot create buffer matrix_prev\n");
+		fprintf(stderr, "cannot create input buffer (for matrix_prev)\n");
 		return 1;
 	}
 	output_buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
 			width * height * sizeof(float), NULL, &error);
 	if ( error != CL_SUCCESS ) {
-		fprintf(stderr, "cannot create buffer c\n");
+		fprintf(stderr, "cannot create output buffer (for matrix_next)\n");
 		return 1;
 	}
 
@@ -156,10 +162,10 @@ int main(int argc, char *argv[]){
         	return 1;
 	}
 
-	clSetKernelArg(kernel, 0, sizeof(cl_mem), &input_buffer);
-	clSetKernelArg(kernel, 1, sizeof(float), &diff_const);
-	clSetKernelArg(kernel, 2, sizeof(cl_mem), &output_buffer);
-	clSetKernelArg(kernel, 3, sizeof(int), &width);
+	clSetKernelArg(kernel_diffusion, 0, sizeof(cl_mem), &input_buffer);
+	clSetKernelArg(kernel_diffusion, 1, sizeof(float), &diff_const);
+	clSetKernelArg(kernel_diffusion, 2, sizeof(cl_mem), &output_buffer);
+	clSetKernelArg(kernel_diffusion, 3, sizeof(int), &width);
 	
 	// Loop over the desired amount of iterations. --> Check if everything that is inside make sense to be inside or if it could be outside of the loop.
 	
@@ -171,11 +177,12 @@ int main(int argc, char *argv[]){
 			return 1;
 		}
 		
-		// "for loop" in the kernel
-		if ( clEnqueueNDRangeKernel(command_queue, kernel,
+		// "for loop" in the kernel_diffusion
+		if ( clEnqueueNDRangeKernel(command_queue, kernel_diffusion,
 					2, NULL, (const size_t *) global_sz, NULL, 0, NULL, NULL)
 				!= CL_SUCCESS ) { // Should make sure that the edges are actually 0.
-			fprintf(stderr, "cannot enqueue kernel\n");
+						  // It turns out it's actually not, we are just taking the following cell in the vector so we are comparing the wrong cells. /R
+			fprintf(stderr, "cannot enqueue kernel_diffusion\n");
 			return 1;
 		}
 
@@ -206,7 +213,7 @@ int main(int argc, char *argv[]){
 	}
 
 	// TODO 
-	// - Compute average temperature and absolute difference with average
+	// - Compute average temperature and absolute difference with average --> Watch video on reduction.
 	// - Compute diffusion from data file instead of dummy matrix
 
 	free(matrix_prev);
@@ -216,7 +223,8 @@ int main(int argc, char *argv[]){
 	clReleaseMemObject(output_buffer);
 
 	clReleaseProgram(program);
-	clReleaseKernel(kernel);
+	clReleaseKernel(kernel_diffusion);
+	clReleaseKernel(kernel_average);
 
 	clReleaseCommandQueue(command_queue);
 	clReleaseContext(context);
