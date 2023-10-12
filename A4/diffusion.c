@@ -164,8 +164,6 @@ int main(int argc, char *argv[]){
 
 	read_and_initialise(fp, width, height, &matrix_prev);
 	fclose(fp);
-
-	printf("The matrix initialisation worked!");
 	// matrix_prev[5] = 10000;
 
 	const size_t global_sz[] = {width, height};
