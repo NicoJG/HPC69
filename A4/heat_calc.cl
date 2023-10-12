@@ -12,7 +12,7 @@ heat_diff(
 	
 	int idx = ix * width + iy;
 
-	float value = matrix_prev[idx];
+	float value = 0;
 
 	//This is to check the boundaries. I don't know if it's affects performance or not. Otherwise we could work with a bigger matrix where the edges are set to zero perhaps. /R
 
@@ -26,14 +26,30 @@ heat_diff(
 
 __kernel
 void
-compute_average(
+compute_reduction(
 	__global const float *matrix,
 	__local float *scratch,
 	__const int sz,
-	__global float *average
+	__global float *result
 	)
 {
-	int ix = get_global_id(0);
-	
-	
+	int gsz = get_global_size(0);
+	int gix = get_global_id(0);
+	int lsz = get_local_size(0);
+	int lix = get_local_id(0);
+
+	float acc = 0;
+	for ( int idx = get_global_id(0); idx < sz; idx += gsz )
+		acc += matrix[idx];
+
+	scratch[lix] = acc;
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	for(int offset = lsz/2; offset > 0; offset /= 2) {
+		if ( lix < offset )
+			scratch[lix] += scratch[lix+offset];
+		barrier(CLK_LOCAL_MEM_FENCE);
+		}
+	if ( lix == 0 )
+		result[get_group_id(0)] = scratch[0];
 }
