@@ -17,7 +17,7 @@ int main(int argc, char *argv[]){
 
 	// Read header 
 	FILE *fp;
-	fp = fopen("test_data/init_10000_1000", "r");
+	fp = fopen("test_data/init_100_100", "r");
 
 	int width, height;
 	read_header(fp, &width, &height);
@@ -132,11 +132,11 @@ int main(int argc, char *argv[]){
 	const int local_redsz = 32;
 	const int nmb_redgps = global_redsz / local_redsz;
 
-	cl_mem input_buffer, output_buffer, output_buffer_sum;
-	input_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY,
+	cl_mem input_buffer, output_buffer, output_buffer_sum, temp_buffer;
+	input_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE,
 			width * height * sizeof(float), NULL, &error);
 	if ( error != CL_SUCCESS ) {
-		fprintf(stderr, "cannot create input buffer (for matrix_prev)\n");
+		fprintf(stderr, "cannot create input buffer (for matrix)\n");
 		return 1;
 	}
 	output_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE,
@@ -155,41 +155,36 @@ int main(int argc, char *argv[]){
 
 	// Dummy 4 * 4 matrix with fixed value in the center and zero otherwise.
 	// Now it should be (real) width * height instead!
-	float *matrix_prev = calloc(width * height, sizeof(float));
-	if (!matrix_prev) {
-		fprintf(stderr, "Error allocating memory for matrix_prev.\n");
+	float *matrix = calloc(width * height, sizeof(float));
+	if (!matrix) {
+		fprintf(stderr, "Error allocating memory for matrix.\n");
 		return 1;
 	}
 
 
-	read_and_initialise(fp, width, height, &matrix_prev);
+	read_and_initialise(fp, width, height, &matrix);
 	fclose(fp);
-	// matrix_prev[5] = 10000;
+	// matrix[5] = 10000;
 
 	const size_t global_sz[] = {width, height};
 
 	// Compute heat diffusion
 
-	float *matrix_next = malloc(width * height*sizeof(float));
-	if (!matrix_next) {
-		fprintf(stderr, "Error allocating memory for matrix_next.\n");
-		free(matrix_prev);
-		return 1;
-	}
-	clSetKernelArg(kernel_diffusion, 0, sizeof(cl_mem), &input_buffer);
-	clSetKernelArg(kernel_diffusion, 1, sizeof(float), &diff_const);
-	clSetKernelArg(kernel_diffusion, 2, sizeof(cl_mem), &output_buffer);
-	clSetKernelArg(kernel_diffusion, 3, sizeof(int), &width);
-
 	// Loop over the desired amount of iterations. --> Check if everything that is inside make sense to be inside or if it could be outside of the loop.
 
+	// load the initial matrix into the input_buffer
+	if ( clEnqueueWriteBuffer(command_queue,
+				input_buffer, CL_TRUE, 0, width * height * sizeof(float), matrix, 0, NULL, NULL)
+			!= CL_SUCCESS ) {
+		fprintf(stderr, "cannot enqueue write of buffer a\n");
+		return 1;
+	}
+
 	for (size_t iteration = 0; iteration < n_its; iteration++){
-		if ( clEnqueueWriteBuffer(command_queue,
-					input_buffer, CL_TRUE, 0, width * height * sizeof(float), matrix_prev, 0, NULL, NULL)
-				!= CL_SUCCESS ) {
-			fprintf(stderr, "cannot enqueue write of buffer a\n");
-			return 1;
-		}
+		clSetKernelArg(kernel_diffusion, 0, sizeof(cl_mem), &input_buffer);
+		clSetKernelArg(kernel_diffusion, 1, sizeof(float), &diff_const);
+		clSetKernelArg(kernel_diffusion, 2, sizeof(cl_mem), &output_buffer);
+		clSetKernelArg(kernel_diffusion, 3, sizeof(int), &width);
 
 		// "for loop" in the kernel_diffusion
 		if ( clEnqueueNDRangeKernel(command_queue, kernel_diffusion,
@@ -200,19 +195,24 @@ int main(int argc, char *argv[]){
 			return 1;
 		}
 
-		if ( clEnqueueReadBuffer(command_queue,
-					output_buffer, CL_TRUE, 0, width * height * sizeof(float), matrix_next, 0, NULL, NULL)
-				!= CL_SUCCESS ) {
-			fprintf(stderr, "cannot enqueue read of buffer output\n");
-			return 1;
-		}
-
-		// Swap pointers; We can't just do matrix_prev = matrix_next because we would loose the reference to the original matrix_prev memory and loose the block.
-		float *temp = matrix_prev;
-		matrix_prev = matrix_next;
-		matrix_next = temp;
+		// The output of this iteration is the input of the next iteration
+		// We can overwrite the input_buffer of this iteration as output in the next iteration
+		temp_buffer = output_buffer;
+		output_buffer = input_buffer;
+		input_buffer = temp_buffer;
 	}
+	// rename it back to output_buffer after the forloop
+	temp_buffer = output_buffer;
+	output_buffer = input_buffer;
+	input_buffer = temp_buffer;
 
+	// read the last output matrix from the GPU
+	if ( clEnqueueReadBuffer(command_queue,
+				output_buffer, CL_TRUE, 0, width * height * sizeof(float), matrix, 0, NULL, NULL)
+			!= CL_SUCCESS ) {
+		fprintf(stderr, "cannot enqueue read of buffer output\n");
+		return 1;
+	}
 
 	const cl_int sz_clint = (cl_int)sz;
 
@@ -257,7 +257,7 @@ int main(int argc, char *argv[]){
 /*
 	for (size_t jx = 0; jx < height; ++jx) {
 		for (size_t ix=0; ix < width; ++ix)
-			printf(" %5.2f ", matrix_prev[jx * width + ix]); // The last iteration is stored in memory_prev because of the pointer swap.
+			printf(" %5.2f ", matrix[jx * width + ix]); // The last iteration is stored in memory_prev because of the pointer swap.
 		printf("\n");
 	}
 */
@@ -268,8 +268,7 @@ int main(int argc, char *argv[]){
 	// --> Average seems to work	
 	// - Compute diffusion from data file instead of dummy matrix
 
-	free(matrix_prev);
-	free(matrix_next);
+	free(matrix);
 
 	clReleaseMemObject(input_buffer);
 	clReleaseMemObject(output_buffer);
