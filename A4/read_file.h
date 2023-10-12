@@ -1,9 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+// I did this first when I was stupid and forgot about sscanf, ffscanf etc.
+// It's all manual parsing so might be faster than sscanf but it's so much more
+// complicated... I leave it here for now but don't use it unless we need to
+// Isak
 static inline
 void
-read_header(
+read_header_manually(
     FILE *fp,
     int *width,
     int *height
@@ -48,7 +53,53 @@ read_header(
         base *= 10;
     }
 
+    // Set reading position to next line so we are ready to read coordinates
+    fseek(fp, i + j + 1, SEEK_SET);
+
     free(width_nums);
     free(height_nums);
     free(header);
-}   
+}
+
+static inline
+void
+read_header(
+    FILE *fp,
+    int *width,
+    int *height
+    ) {
+
+        short header_sz = 16;
+        char *header = (char *) malloc(sizeof(char) * header_sz);
+
+        // make sure width and height are initialised
+        *width = 0;
+        *height = 0;
+
+        // read first line
+        fgets(header, header_sz, fp);
+        sscanf(header, "%d %d", width, height);
+
+        free(header);
+    }
+
+static inline
+void 
+read_and_initialise(
+    FILE *fp,
+    float **vector
+    ) {
+        int x, y;
+        float init;
+
+        // Let''s read line by line (not sure how to allocate a suitable amount of space otherwise)
+        short line_length = 32;
+        char *line = (char*) malloc(sizeof(char) * line_length);
+
+        while (fgets(line, line_length, fp) != NULL) {
+            sscanf(line, "%d %d %f", &x, &y, &init);
+            printf("x: %d, y: %d, value: %f\n", x, y, init);
+        }
+        free(line);
+    }
+
