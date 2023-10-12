@@ -87,9 +87,11 @@ static inline
 void 
 read_and_initialise(
     FILE *fp,
+    int width,
+    int height,
     float **vector
     ) {
-        int x, y;
+        int x, y, linear_ind;
         float init;
 
         // Let''s read line by line (not sure how to allocate a suitable amount of space otherwise)
@@ -98,7 +100,8 @@ read_and_initialise(
 
         while (fgets(line, line_length, fp) != NULL) {
             sscanf(line, "%d %d %f", &x, &y, &init);
-            printf("x: %d, y: %d, value: %f\n", x, y, init);
+            linear_ind = width * y + x;
+            (*vector)[linear_ind] = init;
         }
         free(line);
     }
