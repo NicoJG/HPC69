@@ -181,7 +181,7 @@ int main(int argc, char *argv[]){
 	clSetKernelArg(kernel_diffusion, 0, sizeof(cl_mem), &input_buffer);
 	clSetKernelArg(kernel_diffusion, 1, sizeof(float), &diff_const);
 	clSetKernelArg(kernel_diffusion, 2, sizeof(cl_mem), &output_buffer);
-	clSetKernelArg(kernel_diffusion, 3, sizeof(int), &height);
+	clSetKernelArg(kernel_diffusion, 3, sizeof(int), &width);
 
 	// Loop over the desired amount of iterations. --> Check if everything that is inside make sense to be inside or if it could be outside of the loop.
 
