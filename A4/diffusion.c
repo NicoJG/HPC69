@@ -176,8 +176,6 @@ int main(int argc, char *argv[]){
 		free(matrix_prev);
 		return 1;
 	}
-	// we've gotten width and height mixed up somewhere, it works for non quadratic matrices now
-	// but it's an ugly fix right now
 	clSetKernelArg(kernel_diffusion, 0, sizeof(cl_mem), &input_buffer);
 	clSetKernelArg(kernel_diffusion, 1, sizeof(float), &diff_const);
 	clSetKernelArg(kernel_diffusion, 2, sizeof(cl_mem), &output_buffer);
