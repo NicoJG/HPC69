@@ -17,7 +17,7 @@ int main(int argc, char *argv[]){
 
 	// Read header 
 	FILE *fp;
-	fp = fopen("test_data/init_100_100", "r");
+	fp = fopen("test_data/init_10000_1000", "r");
 
 	int width, height;
 	read_header(fp, &width, &height);
@@ -170,17 +170,18 @@ int main(int argc, char *argv[]){
 
 	// Compute heat diffusion
 
-	float *matrix_next = malloc(width * height * sizeof(float));
+	float *matrix_next = malloc(width * height*sizeof(float));
 	if (!matrix_next) {
 		fprintf(stderr, "Error allocating memory for matrix_next.\n");
 		free(matrix_prev);
 		return 1;
 	}
-
+	// we've gotten width and height mixed up somewhere, it works for non quadratic matrices now
+	// but it's an ugly fix right now
 	clSetKernelArg(kernel_diffusion, 0, sizeof(cl_mem), &input_buffer);
 	clSetKernelArg(kernel_diffusion, 1, sizeof(float), &diff_const);
 	clSetKernelArg(kernel_diffusion, 2, sizeof(cl_mem), &output_buffer);
-	clSetKernelArg(kernel_diffusion, 3, sizeof(int), &width);
+	clSetKernelArg(kernel_diffusion, 3, sizeof(int), &height);
 
 	// Loop over the desired amount of iterations. --> Check if everything that is inside make sense to be inside or if it could be outside of the loop.
 
@@ -204,7 +205,7 @@ int main(int argc, char *argv[]){
 		if ( clEnqueueReadBuffer(command_queue,
 					output_buffer, CL_TRUE, 0, width * height * sizeof(float), matrix_next, 0, NULL, NULL)
 				!= CL_SUCCESS ) {
-			fprintf(stderr, "cannot enqueue read of buffer c\n");
+			fprintf(stderr, "cannot enqueue read of buffer output\n");
 			return 1;
 		}
 
@@ -236,7 +237,7 @@ int main(int argc, char *argv[]){
 	if ( clEnqueueReadBuffer(command_queue,
 				output_buffer_sum, CL_TRUE, 0, nmb_redgps*sizeof(float), sum, 0, NULL, NULL)
 			!= CL_SUCCESS) {
-		fprintf(stderr, "cannot enqueue read of buffer c\n");
+		fprintf(stderr, "cannot enqueue read of buffer c sum\n");
 		return 1;
 	}
 
