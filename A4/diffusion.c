@@ -25,8 +25,6 @@ int main(int argc, char *argv[]){
 	printf("Width: %d\n", width);
 	printf("Height: %d\n", height);
 
-	fclose(fp);
-
 	cl_int error;
 
 	cl_platform_id platform_id;
@@ -125,8 +123,8 @@ int main(int argc, char *argv[]){
 	}
 
 	// REMOVE WHEN NOT USING DUMMY MATRIX
-	width = 4;
-	height = 4;
+	// width = 4;
+	// height = 4;
 
 	// EDIT TO MATCH FILE SIZE
 	const int sz = width * height; // Number of cells; Needs to be divisible by 2 for the reduction to work
@@ -156,13 +154,19 @@ int main(int argc, char *argv[]){
 	}
 
 	// Dummy 4 * 4 matrix with fixed value in the center and zero otherwise.
+	// Now it should be (real) width * height instead!
 	float *matrix_prev = calloc(width * height, sizeof(float));
 	if (!matrix_prev) {
 		fprintf(stderr, "Error allocating memory for matrix_prev.\n");
 		return 1;
 	}
 
-	matrix_prev[5] = 10000;
+
+	read_and_initialise(fp, width, height, &matrix_prev);
+	fclose(fp);
+
+	printf("The matrix initialisation worked!");
+	// matrix_prev[5] = 10000;
 
 	const size_t global_sz[] = {width, height};
 
