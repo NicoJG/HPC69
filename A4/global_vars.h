@@ -10,5 +10,5 @@
 
 /////////////////////////////////////////////
 // Global variables
-short n_its = DEFAULT_ITS;
+int n_its = DEFAULT_ITS;
 float diff_const = DEFAULT_DIFFUSION_CONSTANT;

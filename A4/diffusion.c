@@ -128,8 +128,8 @@ int main(int argc, char *argv[]){
 
 	// EDIT TO MATCH FILE SIZE
 	const int sz = width * height; // Number of cells; Needs to be divisible by 2 for the reduction to work
-	const int global_redsz = 8;
-	const int local_redsz = 2;
+	const int global_redsz = 1024;
+	const int local_redsz = 32;
 	const int nmb_redgps = global_redsz / local_redsz;
 
 	cl_mem input_buffer, output_buffer, output_buffer_sum;
@@ -251,17 +251,17 @@ int main(int argc, char *argv[]){
 	// We need to check if we have to divide the partial sums before if the total sum gets too big.
 	for (size_t ix =0; ix < nmb_redgps; ++ix){
 		sum_total += sum[ix];
-		printf("sum[%d] = %f\n", ix, sum[ix]);
+		//printf("sum[%d] = %f\n", ix, sum[ix]);
 	}
 	sum_total /= sz;
 
-
+/*
 	for (size_t jx = 0; jx < height; ++jx) {
 		for (size_t ix=0; ix < width; ++ix)
 			printf(" %5.2f ", matrix_prev[jx * width + ix]); // The last iteration is stored in memory_prev because of the pointer swap.
 		printf("\n");
 	}
-
+*/
 	printf("Average is : %f\n", sum_total);
 
 	// TODO 
