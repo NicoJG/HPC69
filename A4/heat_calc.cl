@@ -13,13 +13,6 @@ heat_diff(
 
 	int idx = iy*width+ix;
 	float value = matrix_prev[(iy -1)*width + ix] + matrix_prev[(iy+1)*width + ix] + matrix_prev[iy*width + ix-1] + matrix_prev[iy*width+ix+1];
-	//This is to check the boundaries. I don't know if it's affects performance or not. Otherwise we could work with a bigger matrix where the edges are set to zero perhaps. /R
-	 
-	//if (ix > 0) value += matrix_prev[(ix-1)*width + iy];
-    	//if (ix < width-1) value += matrix_prev[(ix+1)*width + iy];
-    	//if (iy > 0) value += matrix_prev[ix*width + iy-1];
-    	//if (iy < width-1) value += matrix_prev[ix*width + iy+1];
-
     	matrix_next[idx] = matrix_prev[idx] + diff_const * (value/4 - matrix_prev[idx]);
 }
 
