@@ -12,11 +12,11 @@ all : \
 diffusion : diffusion.c $(HEADERS)
 	$(CC) $(CFLAGS) -o $@ $<
 
-A4_group69_submission.tar.gz : makefile diffusion.c $(HEADERS)
+A4_group69_submission.tar.gz : makefile diffusion.c $(HEADERS) heat_calc.cl
 	tar czf $@ $^
 
 test_with_script : A4_group69_submission.tar.gz
-	/home/hpc2023/diffusion_opencl/check_submission.jl $<
+	/home/hpc2023/diffusion_opencl/check_submission.jl $< --show-output 
 	rm -rf extracted
 
 clean : 

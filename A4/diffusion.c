@@ -17,7 +17,7 @@ int main(int argc, char *argv[]){
 
 	// Read header 
 	FILE *fp;
-	fp = fopen("test_data/init_3_3", "r");
+	fp = fopen("init", "r");
 	if (fp == NULL) {
 		perror("file could not be opened.");
 	}
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]){
 
 	char *opencl_program_src;
 	{
-		FILE *clfp = fopen("./heat_calc.cl", "r");
+		FILE *clfp = fopen("heat_calc.cl", "r");
 		if ( clfp == NULL ) {
 			fprintf(stderr, "could not load cl source code\n");
 			return 1;
