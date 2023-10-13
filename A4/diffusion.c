@@ -130,6 +130,12 @@ int main(int argc, char *argv[]){
 		return 1;
 	}
 
+	cl_kernel kernel_abs_diff = clCreateKernel(program, "heat_abs_diff", &error);
+	if ( error != CL_SUCCESS ) {
+		fprintf(stderr, "cannot create kernel_heat_abs_diff\n");
+		return 1;
+	}
+
 	// REMOVE WHEN NOT USING DUMMY MATRIX
 	// width = 4;
 	// height = 4;
@@ -248,12 +254,6 @@ int main(int argc, char *argv[]){
 		return 1;
 	}
 
-
-	if ( clFinish(command_queue) != CL_SUCCESS ) {
-		fprintf(stderr, "cannot finish queue\n");
-		return 1;
-	}
-
 	float sum_total = 0.f;
 
 	// We need to check if we have to divide the partial sums before if the total sum gets too big.
@@ -272,10 +272,59 @@ int main(int argc, char *argv[]){
 */
 	printf("Average is : %f\n", sum_total);
 
+	clSetKernelArg(kernel_abs_diff, 0, sizeof(cl_mem), &output_buffer);
+	clSetKernelArg(kernel_abs_diff, 1, sizeof(float), &sum_total);
+	clSetKernelArg(kernel_abs_diff, 2, sizeof(int), &width);
 	// TODO 
 	// - Compute average temperature and absolute difference with average --> Watch video on reduction.
 	// --> Average seems to work	
 	// - Compute diffusion from data file instead of dummy matrix
+	if ( clEnqueueNDRangeKernel(command_queue, kernel_abs_diff,
+					2, NULL, (const size_t *) global_sz, NULL, 0, NULL, NULL)
+				!= CL_SUCCESS ) { // Should make sure that the edges are actually 0.
+						  // It turns out it's actually not, we are just taking the following cell in the vector so we are comparing the wrong cells. /R
+			fprintf(stderr, "cannot enqueue kernel_abs_diff\n");
+			return 1;
+		}
+
+
+	clSetKernelArg(kernel_reduction, 0, sizeof(cl_mem), &output_buffer);
+	clSetKernelArg(kernel_reduction, 1, local_redsz*sizeof(float), NULL);
+	clSetKernelArg(kernel_reduction, 2, sizeof(cl_int), &sz_clint);
+	clSetKernelArg(kernel_reduction, 3, sizeof(cl_mem), &output_buffer_sum);
+
+	if ( clEnqueueNDRangeKernel(command_queue,
+				kernel_reduction, 1, NULL, (const size_t *) &global_redsz_szt, (const size_t *) &local_redsz_szt,
+				0, NULL, NULL)
+			!= CL_SUCCESS) {
+		fprintf(stderr, "cannot enqueue kernel reduction\n");
+		return 1;
+	}
+
+	//float *sum = malloc(nmb_redgps*sizeof(float));
+	if ( clEnqueueReadBuffer(command_queue,
+				output_buffer_sum, CL_TRUE, 0, nmb_redgps*sizeof(float), sum, 0, NULL, NULL)
+			!= CL_SUCCESS) {
+		fprintf(stderr, "cannot enqueue read of buffer c sum\n");
+		return 1;
+	}
+
+
+	if ( clFinish(command_queue) != CL_SUCCESS ) {
+		fprintf(stderr, "cannot finish queue\n");
+		return 1;
+	}
+
+	//float sum_total = 0.f;
+
+	// We need to check if we have to divide the partial sums before if the total sum gets too big.
+	for (size_t ix =0; ix < nmb_redgps; ++ix){
+		sum_total += sum[ix];
+		//printf("sum[%d] = %f\n", ix, sum[ix]);
+	}
+	sum_total /= sz;
+
+	printf("Absolute average difference is : %f\n", sum_total);
 
 	free(matrix);
 
