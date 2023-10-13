@@ -100,7 +100,9 @@ read_and_initialise(
 
         while (fgets(line, line_length, fp) != NULL) {
             sscanf(line, "%d %d %f", &x, &y, &init);
-            linear_ind = width * y + x;
+
+            // remember that we use a zero border offsetting all indices by one
+            linear_ind = width * (y + 1) + (x + 1);
             (*vector)[linear_ind] = init;
         }
         free(line);
