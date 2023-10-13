@@ -171,7 +171,7 @@ int main(int argc, char *argv[]){
 	fclose(fp);
 	// matrix[5] = 10000;
 
-	const size_t global_sz[] = {width, height};
+	const size_t global_sz[] = {height, width};
 
 	// Compute heat diffusion
 
