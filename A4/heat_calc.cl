@@ -39,8 +39,8 @@ heat_abs_diff(
 	int idx = iy * width + ix;
 
 	// overwrite temps with the absolute difference to the average temp
-	temps[idx] = temps[idx] - average_temp;
-	
+	temps[idx] = fabs(temps[idx] - average_temp);
+
 }
 
 __kernel
