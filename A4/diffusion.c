@@ -25,6 +25,11 @@ int main(int argc, char *argv[]){
 	printf("Width: %d\n", width);
 	printf("Height: %d\n", height);
 
+	// We want to add a zero border around the entire matrix so we 
+	// add +2 to both width and height
+	width += 2;
+	height +=2; 
+
 	cl_int error;
 
 	cl_platform_id platform_id;
