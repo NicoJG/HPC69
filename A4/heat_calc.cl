@@ -10,7 +10,8 @@ heat_diff(
 	int ix = get_global_id(0);
 	int iy = get_global_id(1);
 	
-	int idx = ix * width + iy;
+	// changed this to offset 
+	int idx = (ix + 1) * width + (iy + 1);
 
 	float value = 0;
 
