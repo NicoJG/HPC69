@@ -21,7 +21,7 @@ int main(int argc, char *argv[]){
 	if (fp == NULL) {
 		perror("file could not be opened.");
 	}
-	
+
 	int width, height;
 	read_header(fp, &width, &height);
 
@@ -174,7 +174,8 @@ int main(int argc, char *argv[]){
 	fclose(fp);
 	// matrix[5] = 10000;
 
-	const size_t global_sz[] = {height, width};
+	// changed this to 
+	const size_t global_sz[] = {width - 2, height - 2};
 
 	// Compute heat diffusion
 
