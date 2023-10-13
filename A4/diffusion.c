@@ -17,7 +17,7 @@ int main(int argc, char *argv[]){
 
 	// Read header 
 	FILE *fp;
-	fp = fopen("test_data/init_10000_1000", "r");
+	fp = fopen("test_data/init_3_3", "r");
 	if (fp == NULL) {
 		perror("file could not be opened.");
 	}
@@ -261,7 +261,7 @@ int main(int argc, char *argv[]){
 		sum_total += sum[ix];
 		//printf("sum[%d] = %f\n", ix, sum[ix]);
 	}
-	sum_total /= sz;
+	sum_total /= ((width-2)*(height-2));
 
 /*
 	for (size_t jx = 0; jx < height; ++jx) {
@@ -322,7 +322,7 @@ int main(int argc, char *argv[]){
 		sum_total += sum[ix];
 		//printf("sum[%d] = %f\n", ix, sum[ix]);
 	}
-	sum_total /= sz;
+	sum_total /= ((width-2)*(height-2));
 
 	printf("Absolute average difference is : %f\n", sum_total);
 
