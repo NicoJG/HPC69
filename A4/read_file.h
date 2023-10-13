@@ -78,7 +78,7 @@ read_header(
 
         // read first line
         fgets(header, header_sz, fp);
-        sscanf(header, "%d %d", height, width);
+        sscanf(header, "%d %d", width, height);
 
         free(header);
     }
