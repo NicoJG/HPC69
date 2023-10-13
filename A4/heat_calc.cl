@@ -9,8 +9,6 @@ heat_diff(
 {
 	int ix = get_global_id(0) + 1;
 	int iy = get_global_id(1) + 1;
-	
-	int idx = iy * width + ix;
 
 	float value = matrix_prev[(iy -1)*width + ix] + matrix_prev[(iy+1)*width + ix] + matrix_prev[iy*width + ix-1] + matrix_prev[iy*width+ix+1];
 	//This is to check the boundaries. I don't know if it's affects performance or not. Otherwise we could work with a bigger matrix where the edges are set to zero perhaps. /R
