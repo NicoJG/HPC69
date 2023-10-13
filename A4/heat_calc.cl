@@ -7,6 +7,7 @@ heat_diff(
 	int width
 	)
 {
+	// we add one to accunt for our zero border
 	int ix = get_global_id(0) + 1;
 	int iy = get_global_id(1) + 1;
 
@@ -20,6 +21,26 @@ heat_diff(
     	//if (iy < width-1) value += matrix_prev[ix*width + iy+1];
 
     	matrix_next[idx] = matrix_prev[idx] + diff_const * (value/4 - matrix_prev[idx]);
+}
+
+__kernel
+void 
+heat_abs_diff(
+	__global float *temps,
+	const float average_temp,
+	int width 
+) {
+
+	// we add one to accunt for our zero border
+	int ix = get_global_id(0) + 1;
+	int iy = get_global_id(1) + 1;
+
+	// convert to linear index
+	int idx = iy * width + ix;
+
+	// overwrite temps with the absolute difference to the average temp
+	temps[idx] = temps[idx] - average_temp;
+	
 }
 
 __kernel
