@@ -17,8 +17,11 @@ int main(int argc, char *argv[]){
 
 	// Read header 
 	FILE *fp;
-	fp = fopen("test_data/init_100_100", "r");
-
+	fp = fopen("test_data/init_10000_1000", "r");
+	if (fp == NULL) {
+		perror("file could not be opened.");
+	}
+	
 	int width, height;
 	read_header(fp, &width, &height);
 
