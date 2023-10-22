@@ -2,7 +2,7 @@ CC = gcc
 LIBRARIES = -L/usr/lib64/openmpi/lib -lm -lmpi -Wl,-rpath,/usr/lib64/openmpi/lib -Wl,--enable-new-dtags
 CFLAGS  = -O2 -I. -I/usr/include/openmpi-x86_64 -pthread $(LIBRARIES)
 
-HEADERS = 
+HEADERS = cmd_args.h read_file.h
 
 .PHONY : all clean run
 
@@ -15,8 +15,8 @@ diffusion : diffusion.c $(HEADERS)
 A5_group2_submission.tar.gz : makefile diffusion.c $(HEADERS)
 	tar czf $@ $^
 
-test_with_script : A4_group2_submission.tar.gz
-	/home/hpc2023/diffusion_openmp/check_submission.jl $< --show-output 
+test_with_script : A5_group2_submission.tar.gz
+	/home/hpc2023/diffusion_mpi/check_submission.jl $<
 	rm -rf extracted
 
 clean : 
