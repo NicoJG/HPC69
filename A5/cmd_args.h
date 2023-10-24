@@ -52,6 +52,4 @@ void parse_cmd_args(int argc, char *argv[]) {
 		}
 	}
 
-	printf("Number of iterations : %d\n", n_its);
-	printf("Diffusion constant is %f\n", diff_const);
 }
