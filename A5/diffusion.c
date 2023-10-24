@@ -58,15 +58,6 @@ main(
 
 		read_and_initialise(fp, full_width, full_height, &matrix);
 		fclose(fp);
-
-		/* print the matrix
-		for (int iy = 0; iy < height+2; iy++) {
-			for (int ix = 0; ix < full_width; ix++) {
-				printf("%.2e ",matrix[iy*full_width+ix]);
-			}
-			printf("\n");
-		}
-		*/
 	}
 
 	// distribute information about the size to all processes
@@ -97,41 +88,25 @@ main(
 			pos += rowss[i_rank] * full_width;
 		}
 
-	// the gatherv command should not send back the padding
-	// we need new positions and lengths
-	int gather_pos, gather_poss[nmb_mpi_proc];
-	int gather_len, gather_lens[nmb_mpi_proc];
-	if (mpi_rank == 0)
-		for (int i_rank = 0, pos = full_width; i_rank < nmb_mpi_proc; i_rank++) {
-			// how many matrix elements does each process recieve?
-			// each process needs also one row before and one row after its rows
-			gather_lens[i_rank] = rowss[i_rank] * full_width;
-			// set the position in the matrix 1D array
-			gather_poss[i_rank] = pos;
-			pos += rowss[i_rank] * full_width;
-		}
-
 	// tell each process what it will recieve through Scatterv
 	MPI_Scatter(rowss, 1, MPI_INT, &rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Scatter(poss, 1, MPI_INT, &pos, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Scatter(lens, 1, MPI_INT, &len, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	MPI_Scatter(gather_poss, 1, MPI_INT, &gather_pos, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	MPI_Scatter(gather_lens, 1, MPI_INT, &gather_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	//printf("%i %i %i %i\n", mpi_rank,rows, pos, pos+len);
-	//printf("%i %i %i %i\n", mpi_rank,rows, gather_pos, gather_pos+gather_len);
 
 	float *matrix_prev = (float*)calloc(len,sizeof(float));
 	float *matrix_next = (float*)calloc(len,sizeof(float));
 
-
 	// distribute the matrix sections to each process (with padding)
 	MPI_Scatterv(matrix, lens, poss, MPI_FLOAT, matrix_prev, len, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-	for (int i_iter = 0; i_iter < n_its; i_iter++) {
+	// now we don't need the full matrix anymore
+	if (mpi_rank == 0) {
+		free(matrix);
+	}
 
+	for (int i_iter = 0; i_iter < n_its; i_iter++) {
 		// perform the diffusion on each matrix section
 		// remember the offset of 1 in each direction
-		//printf("%e\n", matrix_next[width+50+i_iter]);
 		for (int iy = 1; iy < (rows+1); iy++) {
 			for (int ix = 1; ix < (width+1); ix++) {
 				int idx = iy*full_width+ix;
@@ -139,8 +114,7 @@ main(
 							+ matrix_prev[(iy + 1)*full_width + ix]
 							+ matrix_prev[iy*full_width + ix-1]
 							+ matrix_prev[iy*full_width + ix+1];
-				matrix_next[idx] = matrix_prev[idx] + diff_const * (value/4 - matrix_prev[idx]);
-				//matrix_next[idx] = matrix_prev[idx];
+				matrix_next[idx] = matrix_prev[idx] + diff_const * (value/4.f - matrix_prev[idx]);
 			}
 		}
 
@@ -184,31 +158,6 @@ main(
 						recieve_row,full_width,MPI_FLOAT,recieve_from_rank,0,
 						MPI_COMM_WORLD, &status);
 		}
-
-		// send the diffused matrix sections back to the master process (without padding)
-		//MPI_Gatherv(matrix_next+full_width, gather_len, MPI_FLOAT, matrix, gather_lens, gather_poss, MPI_FLOAT, 0, MPI_COMM_WORLD);
-
-		/* // print matrix segment
-		printf("\n\n\n\niter %i, mpi_rank %i:\n", i_iter, mpi_rank);
-		for (int iy = 0; iy < (rows+2); iy++) {
-				printf("row %i:\n", iy);
-			for (int ix = 0; ix < (width+2); ix++) {
-				printf("%.2e ",matrix_next[iy*full_width+ix]);
-			}
-		} */
-				
-
-		/* // print the matrix 
-		if (mpi_rank == 0) {
-			printf("\n\n\n\niter %i:\n", i_iter);
-			for (int iy = 0; iy < height+2; iy++) {
-				printf("row %i:\n", iy);
-				for (int ix = 0; ix < full_width; ix++) {
-					printf("%.2e ",matrix[iy*full_width+ix]);
-				}
-				printf("\n");
-			}
-		} */
 	}
 	
 
@@ -216,7 +165,7 @@ main(
 	double sum = 0;
 	for (int iy = 1; iy < (rows+1); iy++) {
 		for (int ix = 1; ix < (width+1); ix++) {
-			sum += matrix_next[iy*full_width+ix];
+			sum += matrix_prev[iy*full_width+ix];
 		}
 	}
 
@@ -236,7 +185,7 @@ main(
 	sum = 0;
 	for (int iy = 1; iy < (rows+1); iy++) {
 		for (int ix = 1; ix < (width+1); ix++) {
-			sum += fabs(matrix_next[iy*full_width+ix] - avg_total);
+			sum += fabs(matrix_prev[iy*full_width+ix] - avg_total);
 		}
 	}
 
@@ -253,9 +202,6 @@ main(
 
 	free(matrix_prev);
 	free(matrix_next);
-	if (mpi_rank == 0) {
-		free(matrix);
-	}
     MPI_Finalize();
 	return 0;
 }
