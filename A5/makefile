@@ -1,6 +1,6 @@
 CC = gcc
 LIBRARIES = -L/usr/lib64/openmpi/lib -lm -lmpi -Wl,-rpath,/usr/lib64/openmpi/lib -Wl,--enable-new-dtags
-CFLAGS  = -O2 -I. -I/usr/include/openmpi-x86_64 -pthread $(LIBRARIES)
+CFLAGS  = -O2 -g -I. -I/usr/include/openmpi-x86_64 -pthread $(LIBRARIES)
 
 HEADERS = cmd_args.h read_file.h global_vars.h
 

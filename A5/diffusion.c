@@ -35,7 +35,7 @@ main(
 		printf("Diffusion constant is %f\n", diff_const);
 	}
 	
-	int width, height, full_width;
+	int width, height, full_width, full_height;
 	float *matrix;
 	// read the input file only in the master process
 	if (mpi_rank == 0) {
@@ -45,16 +45,18 @@ main(
 			fprintf(stderr, "file could not be opened.");
 		}
 		read_header(fp, &width, &height);
+		full_width = width+2;
+		full_height = height+2;
 
 		printf("Width: %d\n", width);
 		printf("Height: %d\n", height);
-		matrix = (float*)calloc((width+2) * (height+2), sizeof(float));
+		matrix = (float*)calloc(full_width*full_height, sizeof(float));
 		if (!matrix) {
 			fprintf(stderr, "Error allocating memory for matrix.\n");
 			return 1;
 		}
 
-		read_and_initialise(fp, width+2, height+2, &matrix);
+		read_and_initialise(fp, full_width, full_height, &matrix);
 		fclose(fp);
 
 		/* print the matrix
@@ -70,7 +72,9 @@ main(
 	// distribute information about the size to all processes
 	MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Bcast(&height, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	full_width = width+2;
+	MPI_Bcast(&full_width, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&full_height, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
 
 	// prepare the scatterv command
 	// prepare how many rows each process is responsible for
@@ -123,6 +127,11 @@ main(
 		// distribute the matrix sections to each process (with padding)
 		MPI_Scatterv(matrix, lens, poss, MPI_FLOAT, matrix_prev, len, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
+		// copy the matrix to fix the padding for Gatherv
+		for (int i=0; i<len; i++) {
+			matrix_next[i] = matrix_prev[i];
+		}
+
 		// perform the diffusion on each matrix section
 		// remember the offset of 1 in each direction
 		//printf("%e\n", matrix_next[width+50+i_iter]);
@@ -141,14 +150,27 @@ main(
 		// send the diffused matrix sections back to the master process (without padding)
 		MPI_Gatherv(matrix_next+full_width, gather_len, MPI_FLOAT, matrix, gather_lens, gather_poss, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-		/* print the matrix 
-		if (mpi_rank == 0)
-		for (int iy = 0; iy < height+2; iy++) {
-			for (int ix = 0; ix < full_width; ix++) {
-				printf("%.2e ",matrix[iy*full_width+ix]);
+		/* // print matrix segment
+		printf("\n\n\n\niter %i, mpi_rank %i:\n", i_iter, mpi_rank);
+		for (int iy = 0; iy < (rows+2); iy++) {
+				printf("row %i:\n", iy);
+			for (int ix = 0; ix < (width+2); ix++) {
+				printf("%.2e ",matrix_next[iy*full_width+ix]);
 			}
-			printf("\n");
-		}*/
+		} */
+				
+
+		/* // print the matrix 
+		if (mpi_rank == 0) {
+			printf("\n\n\n\niter %i:\n", i_iter);
+			for (int iy = 0; iy < height+2; iy++) {
+				printf("row %i:\n", iy);
+				for (int ix = 0; ix < full_width; ix++) {
+					printf("%.2e ",matrix[iy*full_width+ix]);
+				}
+				printf("\n");
+			}
+		} */
 	}
 	
 
@@ -168,6 +190,9 @@ main(
 	if (mpi_rank == 0) {
 		avg_total /= width*height;
 	}
+
+	// send the average to each process
+	MPI_Bcast(&avg_total, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
 	// calculate the sum of the differences to the average
 	sum = 0;
