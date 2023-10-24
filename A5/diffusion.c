@@ -117,20 +117,15 @@ main(
 	MPI_Scatter(lens, 1, MPI_INT, &len, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Scatter(gather_poss, 1, MPI_INT, &gather_pos, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Scatter(gather_lens, 1, MPI_INT, &gather_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	printf("%i %i %i %i\n", mpi_rank,rows, pos, pos+len);
-	printf("%i %i %i %i\n", mpi_rank,rows, gather_pos, gather_pos+gather_len);
+	//printf("%i %i %i %i\n", mpi_rank,rows, pos, pos+len);
+	//printf("%i %i %i %i\n", mpi_rank,rows, gather_pos, gather_pos+gather_len);
 
-	float *matrix_prev = (float*)malloc(sizeof(float)*len);
-	float *matrix_next = (float*)malloc(sizeof(float)*len);
+	float *matrix_prev = (float*)calloc(len,sizeof(float));
+	float *matrix_next = (float*)calloc(len,sizeof(float));
 
 	for (int i_iter = 0; i_iter < n_its; i_iter++) {
 		// distribute the matrix sections to each process (with padding)
 		MPI_Scatterv(matrix, lens, poss, MPI_FLOAT, matrix_prev, len, MPI_FLOAT, 0, MPI_COMM_WORLD);
-
-		// copy the matrix to fix the padding for Gatherv
-		for (int i=0; i<len; i++) {
-			matrix_next[i] = matrix_prev[i];
-		}
 
 		// perform the diffusion on each matrix section
 		// remember the offset of 1 in each direction
@@ -208,7 +203,7 @@ main(
 
 	// calculate the average in the master process
 	if (mpi_rank == 0) {
-		avg_total /= width*height;
+		avg_diff_total /= width*height;
 		printf("Average is : %f\n", avg_total);
 		printf("Absolute average difference is : %f\n", avg_diff_total);
 	}
