@@ -104,18 +104,19 @@ main(
 		free(matrix);
 	}
 
+	float *elem_up, *elem_down, *elem_left, *elem_right, *elem, *next_elem;
+
 	for (int i_iter = 0; i_iter < n_its; i_iter++) {
 		// perform the diffusion on each matrix section
 		// remember the offset of 1 in each direction
-		for (int iy = 1; iy < (rows+1); iy++) {
-			for (int ix = 1; ix < (width+1); ix++) {
-				int idx = iy*full_width+ix;
-				float value = matrix_prev[(iy - 1)*full_width + ix]
-							+ matrix_prev[(iy + 1)*full_width + ix]
-							+ matrix_prev[iy*full_width + ix-1]
-							+ matrix_prev[iy*full_width + ix+1];
-				matrix_next[idx] = matrix_prev[idx] + diff_const * (value/4.f - matrix_prev[idx]);
-			}
+		elem_up = matrix_prev+1;
+		elem_down = matrix_prev+2*full_width+1; 
+		elem = matrix_prev+full_width+1;
+		next_elem = matrix_next+full_width+1;
+		int section_len = rows*width;
+		for (int i=0; i<section_len; i++, elem_up++, elem_down++, elem++, next_elem++) {
+			float value = *elem_up + *elem_down + *(elem-1) + *(elem+1);
+			*next_elem = *elem + diff_const * (value/4.f - *elem);
 		}
 
 		// switch matrix_next and matrix_prev
