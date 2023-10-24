@@ -110,13 +110,15 @@ main(
 		float left, center, right;
 		for (int i_row=1; i_row<(rows+1); i_row++) {
 			int i = (i_row*full_width + 1);
+			int i_up = i-full_width;
+			int i_down = i+full_width;
 			int end_of_row = i+width;
 			left = matrix_prev[i-1];
 			center = matrix_prev[i];
-			for (; i<end_of_row; i++) {
+			for (; i<end_of_row; i++, i_up++, i_down++) {
 				right = matrix_prev[i+1];
-				float value = matrix_prev[i-full_width] 
-							+ matrix_prev[i+full_width] 
+				float value = matrix_prev[i_up] 
+							+ matrix_prev[i_down] 
 							+ left 
 							+ right;
 				matrix_next[i] = center + diff_const * (value/4.f - center);
@@ -133,6 +135,10 @@ main(
 		// we only need to update the padding rows for each process
 		float *send_row, *recieve_row;
 		int send_to_rank, recieve_from_rank;
+
+		// don't send and recieve stuff if there is only one process
+		if (nmb_mpi_proc == 1)
+			continue;
 
 		// send the last row (non-padding row) 
 		// and recieve the first row (padding row)
