@@ -123,9 +123,11 @@ main(
 	float *matrix_prev = (float*)calloc(len,sizeof(float));
 	float *matrix_next = (float*)calloc(len,sizeof(float));
 
+
+	// distribute the matrix sections to each process (with padding)
+	MPI_Scatterv(matrix, lens, poss, MPI_FLOAT, matrix_prev, len, MPI_FLOAT, 0, MPI_COMM_WORLD);
+
 	for (int i_iter = 0; i_iter < n_its; i_iter++) {
-		// distribute the matrix sections to each process (with padding)
-		MPI_Scatterv(matrix, lens, poss, MPI_FLOAT, matrix_prev, len, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
 		// perform the diffusion on each matrix section
 		// remember the offset of 1 in each direction
@@ -142,8 +144,49 @@ main(
 			}
 		}
 
+		// switch matrix_next and matrix_prev
+		float *tmp = matrix_next;
+		matrix_next = matrix_prev;
+		matrix_prev = tmp;
+
+		// we only need to update the padding rows for each process
+		float *send_row, *recieve_row;
+		int send_to_rank, recieve_from_rank;
+
+		// send the last row (non-padding row) 
+		// and recieve the first row (padding row)
+		send_row = matrix_prev + (len-2*full_width);
+		recieve_row = matrix_prev;
+		send_to_rank = mpi_rank + 1;
+		recieve_from_rank = mpi_rank - 1;
+		if (mpi_rank == 0) {
+			MPI_Send(send_row, full_width, MPI_FLOAT, send_to_rank, 0, MPI_COMM_WORLD);
+		} else if (mpi_rank == nmb_mpi_proc - 1) {
+			MPI_Recv(recieve_row, full_width, MPI_FLOAT, recieve_from_rank, 0, MPI_COMM_WORLD, &status);
+		} else {
+			MPI_Sendrecv(send_row,full_width,MPI_FLOAT,send_to_rank,0,
+						recieve_row,full_width,MPI_FLOAT,recieve_from_rank,0,
+						MPI_COMM_WORLD, &status);
+		}
+
+		// send the first row (non-padding row) 
+		// and recieve the last row (padding row)
+		send_row = matrix_prev + full_width;
+		recieve_row = matrix_prev + (len-full_width);
+		send_to_rank = mpi_rank - 1;
+		recieve_from_rank = mpi_rank + 1;
+		if (mpi_rank == nmb_mpi_proc - 1) {
+			MPI_Send(send_row, full_width, MPI_FLOAT, send_to_rank, 0, MPI_COMM_WORLD);
+		} else if (mpi_rank == 0) {
+			MPI_Recv(recieve_row, full_width, MPI_FLOAT, recieve_from_rank, 0, MPI_COMM_WORLD, &status);
+		} else {
+			MPI_Sendrecv(send_row,full_width,MPI_FLOAT,send_to_rank,0,
+						recieve_row,full_width,MPI_FLOAT,recieve_from_rank,0,
+						MPI_COMM_WORLD, &status);
+		}
+
 		// send the diffused matrix sections back to the master process (without padding)
-		MPI_Gatherv(matrix_next+full_width, gather_len, MPI_FLOAT, matrix, gather_lens, gather_poss, MPI_FLOAT, 0, MPI_COMM_WORLD);
+		//MPI_Gatherv(matrix_next+full_width, gather_len, MPI_FLOAT, matrix, gather_lens, gather_poss, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
 		/* // print matrix segment
 		printf("\n\n\n\niter %i, mpi_rank %i:\n", i_iter, mpi_rank);
