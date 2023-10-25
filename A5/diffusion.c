@@ -4,11 +4,264 @@
 #include <stdio.h>
 #include <math.h>
 #include <mpi.h>
+#include <x86intrin.h>
 
 #include "global_vars.h"
 #include "cmd_args.h"
 #include "read_file.h"
 
+static inline 
+__m512 diffusion_formula_vectorized_16(const float *left, const float *center, const float *right) {
+	// calculate result = center + diff_const * ((left+right+up+down)/4 - center)
+	__m512 a_vec, b_vec, result_vec, tmp_vec;
+
+	// add left and right (8 floats in each vector, start one row down)
+	a_vec = _mm512_loadu_ps(left+1);
+	b_vec = _mm512_loadu_ps(right+1);
+	tmp_vec = _mm512_add_ps(a_vec, b_vec);
+
+	// add up and down (8 floats in each vector)
+	a_vec = _mm512_loadu_ps(center);
+	b_vec = _mm512_loadu_ps(center+2);
+	result_vec = _mm512_add_ps(a_vec, b_vec);
+
+	// add the results (8 floats in each vector)
+	result_vec = _mm512_add_ps(tmp_vec, result_vec);
+
+	// divide by 4
+	__m512 divisorVector = _mm512_set1_ps(4.f);
+	result_vec = _mm512_div_ps(result_vec, divisorVector);
+
+	// subtract center from result 
+	a_vec = _mm512_loadu_ps(center+1);
+	result_vec = _mm512_sub_ps(result_vec, a_vec);
+
+	// multiply by diffusion constant
+	__m512 constantVector = _mm512_set1_ps(diff_const);
+	result_vec = _mm512_mul_ps(result_vec, constantVector);
+
+	// add to center
+	result_vec = _mm512_add_ps(result_vec, a_vec);
+
+	return result_vec;
+}
+
+static inline 
+__m256 diffusion_formula_vectorized_8(const float *left, const float *center, const float *right) {
+	// calculate result = center + diff_const * ((left+right+up+down)/4 - center)
+	__m256 a_vec, b_vec, result_vec, tmp_vec;
+
+	// add left and right (8 floats in each vector, start one row down)
+	a_vec = _mm256_loadu_ps(left+1);
+	b_vec = _mm256_loadu_ps(right+1);
+	tmp_vec = _mm256_add_ps(a_vec, b_vec);
+
+	// add up and down (8 floats in each vector)
+	a_vec = _mm256_loadu_ps(center);
+	b_vec = _mm256_loadu_ps(center+2);
+	result_vec = _mm256_add_ps(a_vec, b_vec);
+
+	// add the results (8 floats in each vector)
+	result_vec = _mm256_add_ps(tmp_vec, result_vec);
+
+	// divide by 4
+	__m256 divisorVector = _mm256_set1_ps(4.f);
+	result_vec = _mm256_div_ps(result_vec, divisorVector);
+
+	// subtract center from result 
+	a_vec = _mm256_loadu_ps(center+1);
+	result_vec = _mm256_sub_ps(result_vec, a_vec);
+
+	// multiply by diffusion constant
+	__m256 constantVector = _mm256_set1_ps(diff_const);
+	result_vec = _mm256_mul_ps(result_vec, constantVector);
+
+	// add to center
+	result_vec = _mm256_add_ps(result_vec, a_vec);
+
+	return result_vec;
+}
+
+static inline 
+__m128 diffusion_formula_vectorized_4(const float *left, const float *center, const float *right) {
+	// calculate result = center + diff_const * ((left+right+up+down)/4 - center)
+	__m128 a_vec, b_vec, result_vec, tmp_vec;
+
+	// add left and right (8 floats in each vector, start one row down)
+	a_vec = _mm_loadu_ps(left+1);
+	b_vec = _mm_loadu_ps(right+1);
+	tmp_vec = _mm_add_ps(a_vec, b_vec);
+
+	// add up and down (8 floats in each vector)
+	a_vec = _mm_loadu_ps(center);
+	b_vec = _mm_loadu_ps(center+2);
+	result_vec = _mm_add_ps(a_vec, b_vec);
+
+	// add the results (8 floats in each vector)
+	result_vec = _mm_add_ps(tmp_vec, result_vec);
+
+	// divide by 4
+	__m128 divisorVector = _mm_set1_ps(4.f);
+	result_vec = _mm_div_ps(result_vec, divisorVector);
+
+	// subtract center from result 
+	a_vec = _mm_loadu_ps(center+1);
+	result_vec = _mm_sub_ps(result_vec, a_vec);
+
+	// multiply by diffusion constant
+	__m128 constantVector = _mm_set1_ps(diff_const);
+	result_vec = _mm_mul_ps(result_vec, constantVector);
+
+	// add to center
+	result_vec = _mm_add_ps(result_vec, a_vec);
+
+	return result_vec;
+}
+
+static inline
+void perform_diffusion_vectorized(int rows, int full_width, int width, float *matrix_prev, float *matrix_next) {
+	const int n_vec = 8;
+	const int n_subrows = n_vec+2;
+	// perform the diffusion on n_vec rows at the same time
+	int i_row;
+	float a[n_subrows], b[n_subrows], c[n_subrows];
+	float *left=a, *center=b, *right=c, *tmp;
+	float d[n_vec];
+	float *result = d;
+	for (i_row=1; i_row<(rows+1)-n_vec; i_row+=n_vec) {
+		int i_col = 1;
+		// load left and center only for first column
+		for (int i_subrow=0; i_subrow<n_subrows; i_subrow++){
+			left[i_subrow] = matrix_prev[(i_row-1+i_subrow)*full_width + (i_col - 1)];
+			center[i_subrow] = matrix_prev[(i_row-1+i_subrow)*full_width + (i_col)];
+		}
+
+		for (; i_col<(width+1); i_col++) {
+			// load right for each column
+			for (int i_subrow=0; i_subrow<n_subrows; i_subrow++){
+				right[i_subrow] = matrix_prev[(i_row-1+i_subrow)*full_width + (i_col + 1)];
+			}
+			
+			__m256 result_vec = diffusion_formula_vectorized_8(left, center, right);
+			_mm256_storeu_ps(result, result_vec);
+			for (int i_subrow=0; i_subrow<n_vec; i_subrow++){
+				matrix_next[(i_row+i_subrow)*full_width+i_col] = result[i_subrow];
+			}
+			
+			tmp = left;
+			left = center;
+			center = right;
+			right = tmp;
+		}
+	}
+}
+
+static inline 
+__m256 diffusion_formula_vectorized_8_cols(__m256 left, __m256 center, __m256 right, __m256 up, __m256 down) {
+	// calculate result = center + diff_const * ((left+right+up+down)/4 - center)
+	__m256 result_vec, tmp_vec;
+
+	// add left and right (8 floats in each vector, start one row down)
+	tmp_vec = _mm256_add_ps(left, right);
+
+	// add up and down (8 floats in each vector)
+	result_vec = _mm256_add_ps(up, down);
+
+	// add the results (8 floats in each vector)
+	result_vec = _mm256_add_ps(tmp_vec, result_vec);
+
+	// divide by 4
+	__m256 divisorVector = _mm256_set1_ps(4.f);
+	result_vec = _mm256_div_ps(result_vec, divisorVector);
+
+	// subtract center from result 
+	result_vec = _mm256_sub_ps(result_vec, center);
+
+	// multiply by diffusion constant
+	__m256 constantVector = _mm256_set1_ps(diff_const);
+	result_vec = _mm256_mul_ps(result_vec, constantVector);
+
+	// add to center
+	result_vec = _mm256_add_ps(result_vec, center);
+
+	return result_vec;
+}
+
+static inline
+void perform_diffusion_vectorized_cols(int rows, int full_width, int width, float *matrix_prev, float *matrix_next) {
+	const int n_vec = 8;
+	// perform the diffusion on n_vec cols at the same time
+	for (int i_row=1; i_row<(rows+1); i_row++) {
+		int i_col = 1;
+		for (; i_col<(width+1)-n_vec; i_col+=n_vec) {
+			__m256 left = _mm256_loadu_ps(&matrix_prev[i_row*full_width+i_col-1]);
+			__m256 center = _mm256_loadu_ps(&matrix_prev[i_row*full_width+i_col]);
+			__m256 right = _mm256_loadu_ps(&matrix_prev[i_row*full_width+i_col+1]);
+			__m256 up = _mm256_loadu_ps(&matrix_prev[(i_row-1)*full_width+i_col]);
+			__m256 down = _mm256_loadu_ps(&matrix_prev[(i_row+1)*full_width+i_col]);
+
+			__m256 result_vec = diffusion_formula_vectorized_8_cols(left, center, right, up, down);
+			_mm256_storeu_ps(&matrix_next[i_row*full_width+i_col], result_vec);
+		}
+	}
+}
+
+static inline
+void perform_diffusion(int rows, int full_width, int width, float *matrix_prev, float *matrix_next) {
+	// remember the offset of 1 in each direction
+	// do two rows at a time
+	float left, center, right, left2, center2, right2;
+	int i_row;
+	for (i_row=1; i_row<(rows-1); i_row+=2) {
+		int i = (i_row*full_width + 1);
+		int i2 = i+full_width;
+		int i_up = i-full_width;
+		int i_down = i2+full_width;
+		int end_of_row = i+width;
+		left = matrix_prev[i-1];
+		center = matrix_prev[i];
+		left2 = matrix_prev[i2-1];
+		center2 = matrix_prev[i2];
+		for (; i<end_of_row; i++, i2++, i_up++, i_down++) {
+			right = matrix_prev[i+1];
+			float value = matrix_prev[i_up] 
+						+ center2
+						+ left 
+						+ right;
+			matrix_next[i] = center + diff_const * (value/4.f - center);
+
+			right2 = matrix_prev[i2+1];
+			float value2 = center 
+						+ matrix_prev[i_down] 
+						+ left2 
+						+ right2;
+			matrix_next[i2] = center2 + diff_const * (value2/4.f - center2);
+
+			left = center;
+			center = right;
+			left2 = center2;
+			center2 = right2;
+		}
+	}
+	for (; i_row<(rows+1); i_row++) {
+		int i = (i_row*full_width + 1);
+		int i_up = i-full_width;
+		int i_down = i+full_width;
+		int end_of_row = i+width;
+		left = matrix_prev[i-1];
+		center = matrix_prev[i];
+		for (; i<end_of_row; i++, i_up++, i_down++) {
+			right = matrix_prev[i+1];
+			float value = matrix_prev[i_up] 
+						+ matrix_prev[i_down]
+						+ left 
+						+ right;
+			matrix_next[i] = center + diff_const * (value/4.f - center);
+			left = center;
+			center = right;
+		}
+	}
+}
 
 int
 main(
@@ -107,57 +360,9 @@ main(
 	for (int i_iter = 0; i_iter < n_its; i_iter++) {
 		// perform the diffusion on each matrix section
 		// remember the offset of 1 in each direction
-		float left, center, right, left2, center2, right2;
-		int i_row;
-		for (i_row=1; i_row<(rows-1); i_row+=2) {
-			int i = (i_row*full_width + 1);
-			int i2 = i+full_width;
-			int i_up = i-full_width;
-			int i_down = i2+full_width;
-			int end_of_row = i+width;
-			left = matrix_prev[i-1];
-			center = matrix_prev[i];
-			left2 = matrix_prev[i2-1];
-			center2 = matrix_prev[i2];
-			for (; i<end_of_row; i++, i2++, i_up++, i_down++) {
-				right = matrix_prev[i+1];
-				float value = matrix_prev[i_up] 
-							+ center2
-							+ left 
-							+ right;
-				matrix_next[i] = center + diff_const * (value/4.f - center);
-
-				right2 = matrix_prev[i2+1];
-				float value2 = center 
-							+ matrix_prev[i_down] 
-							+ left2 
-							+ right2;
-				matrix_next[i2] = center2 + diff_const * (value2/4.f - center2);
-
-				left = center;
-				center = right;
-				left2 = center2;
-				center2 = right2;
-			}
-		}
-		for (; i_row<(rows+1); i_row++) {
-			int i = (i_row*full_width + 1);
-			int i_up = i-full_width;
-			int i_down = i+full_width;
-			int end_of_row = i+width;
-			left = matrix_prev[i-1];
-			center = matrix_prev[i];
-			for (; i<end_of_row; i++, i_up++, i_down++) {
-				right = matrix_prev[i+1];
-				float value = matrix_prev[i_up] 
-							+ matrix_prev[i_down]
-							+ left 
-							+ right;
-				matrix_next[i] = center + diff_const * (value/4.f - center);
-				left = center;
-				center = right;
-			}
-		}
+		//perform_diffusion(rows, full_width, width, matrix_prev, matrix_next);
+		//perform_diffusion_vectorized(rows, full_width, width, matrix_prev, matrix_next);
+		perform_diffusion_vectorized_cols(rows, full_width, width, matrix_prev, matrix_next);
 
 		// switch matrix_next and matrix_prev
 		float *tmp = matrix_next;
