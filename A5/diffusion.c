@@ -107,8 +107,40 @@ main(
 	for (int i_iter = 0; i_iter < n_its; i_iter++) {
 		// perform the diffusion on each matrix section
 		// remember the offset of 1 in each direction
-		float left, center, right;
-		for (int i_row=1; i_row<(rows+1); i_row++) {
+		float left, center, right, left2, center2, right2;
+		int i_row;
+		for (i_row=1; i_row<(rows-1); i_row+=2) {
+			int i = (i_row*full_width + 1);
+			int i2 = i+full_width;
+			int i_up = i-full_width;
+			int i_down = i2+full_width;
+			int end_of_row = i+width;
+			left = matrix_prev[i-1];
+			center = matrix_prev[i];
+			left2 = matrix_prev[i2-1];
+			center2 = matrix_prev[i2];
+			for (; i<end_of_row; i++, i2++, i_up++, i_down++) {
+				right = matrix_prev[i+1];
+				float value = matrix_prev[i_up] 
+							+ center2
+							+ left 
+							+ right;
+				matrix_next[i] = center + diff_const * (value/4.f - center);
+
+				right2 = matrix_prev[i2+1];
+				float value2 = center 
+							+ matrix_prev[i_down] 
+							+ left2 
+							+ right2;
+				matrix_next[i2] = center2 + diff_const * (value2/4.f - center2);
+
+				left = center;
+				center = right;
+				left2 = center2;
+				center2 = right2;
+			}
+		}
+		for (; i_row<(rows+1); i_row++) {
 			int i = (i_row*full_width + 1);
 			int i_up = i-full_width;
 			int i_down = i+full_width;
@@ -118,7 +150,7 @@ main(
 			for (; i<end_of_row; i++, i_up++, i_down++) {
 				right = matrix_prev[i+1];
 				float value = matrix_prev[i_up] 
-							+ matrix_prev[i_down] 
+							+ matrix_prev[i_down]
 							+ left 
 							+ right;
 				matrix_next[i] = center + diff_const * (value/4.f - center);
